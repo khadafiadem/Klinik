@@ -23,7 +23,7 @@ func Load() (*Config, error) {
 
 	cfg.AppEnv = getEnv("APP_ENV", "development")
 
-	portStr := getEnv("APP_PORT", "8080")
+	portStr := getEnv("APP_PORT", getEnv("PORT", "8080"))
 	port, err := strconv.Atoi(portStr)
 	if err != nil {
 		return nil, fmt.Errorf("invalid APP_PORT: %w", err)
