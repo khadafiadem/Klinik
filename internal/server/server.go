@@ -265,6 +265,10 @@ func (s *Server) logRequests(next http.Handler) http.Handler {
 	})
 }
 
+func (s *Server) Handler() http.Handler {
+	return s.srv.Handler
+}
+
 func (s *Server) Start() error {
 	logger.Info.Printf("Server starting on port %d", s.cfg.AppPort)
 
