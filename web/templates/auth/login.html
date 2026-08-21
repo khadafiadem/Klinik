@@ -1,0 +1,59 @@
+{{define "title"}}Login{{end}}
+
+{{define "content"}}
+<div class="login-wrapper">
+    <div class="login-left">
+        <div class="login-branding">
+            <div class="login-branding-icon">K</div>
+            <h1>Sistem Manajemen Klinik</h1>
+            <p>Kelola data pasien, jadwal dokter, rekam medis, dan operasional klinik Anda dalam satu platform terintegrasi.</p>
+        </div>
+        <div class="login-features">
+            <div class="login-feature-item">
+                <div class="login-feature-icon">&#9826;</div>
+                <span class="login-feature-text">Manajemen Pasien & Rekam Medis</span>
+            </div>
+            <div class="login-feature-item">
+                <div class="login-feature-icon">&#9764;</div>
+                <span class="login-feature-text">Jadwal Dokter & Antrian</span>
+            </div>
+            <div class="login-feature-item">
+                <div class="login-feature-icon">&#9879;</div>
+                <span class="login-feature-text">Apotek & Persediaan Obat</span>
+            </div>
+            <div class="login-feature-item">
+                <div class="login-feature-icon">&#9733;</div>
+                <span class="login-feature-text">Laporan & Analitik</span>
+            </div>
+        </div>
+    </div>
+    <div class="login-right">
+        <div class="login-form-container">
+            <div class="login-form-header">
+                <h2>Selamat Datang</h2>
+                <p>Masuk ke akun Anda untuk melanjutkan</p>
+            </div>
+
+            {{if .Error}}
+            <div class="alert alert-error">{{.Error}}</div>
+            {{end}}
+
+            <form method="POST" action="/login" class="login-form">
+                <div class="form-group">
+                    <label for="username">Username</label>
+                    <input type="text" id="username" name="username" required autofocus placeholder="Masukkan username Anda">
+                </div>
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" name="password" required placeholder="Masukkan password Anda">
+                </div>
+                <button type="submit" class="btn btn-primary btn-block">Masuk</button>
+            </form>
+
+            <div class="login-form-footer">
+                <p>KlinikApp v1.0 &mdash; Sistem Manajemen Klinik</p>
+            </div>
+        </div>
+    </div>
+</div>
+{{end}}

@@ -1,0 +1,95 @@
+{{define "base"}}
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{template "title" .}} - KlinikApp</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    {{if .User}}
+    <button class="mobile-menu-toggle" onclick="toggleSidebar()">&#9776;</button>
+    <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
+
+    <nav class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <div class="sidebar-logo">K</div>
+            <div class="sidebar-brand">
+                <h3>KlinikApp</h3>
+                <small>Manajemen Klinik</small>
+            </div>
+        </div>
+
+        <div class="sidebar-nav">
+            <div class="sidebar-section">
+                <div class="sidebar-section-label">Menu Utama</div>
+                <ul class="sidebar-menu">
+                    <li><a href="/dashboard" class="{{if eq .ActivePage "dashboard"}}active{{end}}"><span class="nav-icon">&#9632;</span> Dashboard</a></li>
+                    <li><a href="/patients" class="{{if eq .ActivePage "patients"}}active{{end}}"><span class="nav-icon">&#9826;</span> Pasien</a></li>
+                    <li><a href="/doctors" class="{{if eq .ActivePage "doctors"}}active{{end}}"><span class="nav-icon">&#9764;</span> Dokter</a></li>
+                    <li><a href="/staff" class="{{if eq .ActivePage "staff"}}active{{end}}"><span class="nav-icon">&#9881;</span> Staff</a></li>
+                </ul>
+            </div>
+            <div class="sidebar-section">
+                <div class="sidebar-section-label">Pelayanan</div>
+                <ul class="sidebar-menu">
+                    <li><a href="/registrations" class="{{if eq .ActivePage "registrations"}}active{{end}}"><span class="nav-icon">&#9998;</span> Pendaftaran</a></li>
+                    <li><a href="/queues" class="{{if eq .ActivePage "queues"}}active{{end}}"><span class="nav-icon">&#9201;</span> Antrian</a></li>
+                    <li><a href="/medical-records" class="{{if eq .ActivePage "medical-records"}}active{{end}}"><span class="nav-icon">&#9997;</span> Rekam Medis</a></li>
+                    <li><a href="/prescriptions" class="{{if eq .ActivePage "prescriptions"}}active{{end}}"><span class="nav-icon">&#9998;</span> Resep Obat</a></li>
+                    <li><a href="/medicines" class="{{if eq .ActivePage "medicines"}}active{{end}}"><span class="nav-icon">&#9764;</span> Apotek</a></li>
+                </ul>
+            </div>
+            <div class="sidebar-section">
+                <div class="sidebar-section-label">Keuangan</div>
+                <ul class="sidebar-menu">
+                    <li><a href="/invoices" class="{{if eq .ActivePage "invoices"}}active{{end}}"><span class="nav-icon">&#9998;</span> Tagihan</a></li>
+                    <li><a href="/payments" class="{{if eq .ActivePage "payments"}}active{{end}}"><span class="nav-icon">&#9998;</span> Pembayaran</a></li>
+                </ul>
+            </div>
+            <div class="sidebar-section">
+                <div class="sidebar-section-label">Laporan</div>
+                <ul class="sidebar-menu">
+                    <li><a href="/reports" class="{{if eq .ActivePage "reports"}}active{{end}}"><span class="nav-icon">&#9998;</span> Dashboard Laporan</a></li>
+                    <li><a href="/reports/patients" class="{{if eq .ActivePage "patients-rpt"}}active{{end}}"><span class="nav-icon">&#9826;</span> Pasien</a></li>
+                    <li><a href="/reports/registrations" class="{{if eq .ActivePage "registrations-rpt"}}active{{end}}"><span class="nav-icon">&#9998;</span> Pendaftaran</a></li>
+                    <li><a href="/reports/doctors" class="{{if eq .ActivePage "doctors-rpt"}}active{{end}}"><span class="nav-icon">&#9764;</span> Aktivitas Dokter</a></li>
+                    <li><a href="/reports/revenue" class="{{if eq .ActivePage "revenue-rpt"}}active{{end}}"><span class="nav-icon">&#9998;</span> Pendapatan</a></li>
+                    <li><a href="/reports/medicines" class="{{if eq .ActivePage "medicines-rpt"}}active{{end}}"><span class="nav-icon">&#9764;</span> Stok Obat</a></li>
+                </ul>
+            </div>
+            <div class="sidebar-section">
+                <div class="sidebar-section-label">Sistem</div>
+                <ul class="sidebar-menu">
+                    <li><a href="/clinic-settings" class="{{if eq .ActivePage "clinic-settings"}}active{{end}}"><span class="nav-icon">&#9881;</span> Pengaturan Klinik</a></li>
+                    <li><a href="/audit-logs" class="{{if eq .ActivePage "audit-logs"}}active{{end}}"><span class="nav-icon">&#9998;</span> Log Aktivitas</a></li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="sidebar-footer">
+            <div class="sidebar-user">
+                <div class="sidebar-avatar">{{slice .User.FullName 0 1}}</div>
+                <div class="sidebar-user-info">
+                    <span class="sidebar-user-name">{{.User.FullName}}</span>
+                    <span class="sidebar-user-role">{{range .User.Roles}}{{.Name}}{{end}}</span>
+                </div>
+            </div>
+            <a href="/logout" class="btn-logout">&#10140; Keluar</a>
+        </div>
+    </nav>
+
+    <main class="content">
+        {{template "content" .}}
+    </main>
+    {{else}}
+    {{template "content" .}}
+    {{end}}
+    <script src="/static/js/app.js"></script>
+</body>
+</html>
+{{end}}

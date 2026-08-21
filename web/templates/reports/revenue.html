@@ -1,0 +1,82 @@
+{{define "title"}}Laporan Pendapatan{{end}}
+
+{{define "content"}}
+{{$rev := (index .Data "Revenue")}}
+{{$pay := (index .Data "Payments")}}
+<div class="page-header">
+    <div>
+        <h1 class="page-title">Laporan Pendapatan</h1>
+        <p class="page-subtitle">Ringkasan keuangan klinik</p>
+    </div>
+    <a href="/reports" class="btn btn-secondary">Kembali</a>
+</div>
+
+<!-- Revenue Summary -->
+<div class="stat-grid" style="margin-bottom:24px;">
+    <div class="stat-card stat-success">
+        <div class="stat-content">
+            <div class="stat-number">Rp {{printf "%.0f" $rev.TodayRevenue}}</div>
+            <div class="stat-label">Hari Ini</div>
+        </div>
+    </div>
+    <div class="stat-card stat-info">
+        <div class="stat-content">
+            <div class="stat-number">Rp {{printf "%.0f" $rev.WeekRevenue}}</div>
+            <div class="stat-label">Minggu Ini</div>
+        </div>
+    </div>
+    <div class="stat-card stat-warning">
+        <div class="stat-content">
+            <div class="stat-number">Rp {{printf "%.0f" $rev.MonthRevenue}}</div>
+            <div class="stat-label">Bulan Ini</div>
+        </div>
+    </div>
+    <div class="stat-card stat-info">
+        <div class="stat-content">
+            <div class="stat-number">Rp {{printf "%.0f" $rev.TotalRevenue}}</div>
+            <div class="stat-label">Total Pendapatan</div>
+        </div>
+    </div>
+</div>
+
+<!-- Payment Methods -->
+<div class="card">
+    <div class="card-header">
+        <h3 class="card-title">Pembayaran per Metode</h3>
+    </div>
+    <div class="card-body">
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px;">
+            <div class="stat-card stat-info">
+                <div class="stat-content">
+                    <div class="stat-number" style="font-size:1em;">Rp {{printf "%.0f" $pay.CashTotal}}</div>
+                    <div class="stat-label">Tunai</div>
+                </div>
+            </div>
+            <div class="stat-card stat-success">
+                <div class="stat-content">
+                    <div class="stat-number" style="font-size:1em;">Rp {{printf "%.0f" $pay.TransferTotal}}</div>
+                    <div class="stat-label">Transfer Bank</div>
+                </div>
+            </div>
+            <div class="stat-card stat-warning">
+                <div class="stat-content">
+                    <div class="stat-number" style="font-size:1em;">Rp {{printf "%.0f" $pay.QRISTotal}}</div>
+                    <div class="stat-label">QRIS</div>
+                </div>
+            </div>
+            <div class="stat-card stat-info">
+                <div class="stat-content">
+                    <div class="stat-number" style="font-size:1em;">Rp {{printf "%.0f" $pay.BPJSTotal}}</div>
+                    <div class="stat-label">BPJS</div>
+                </div>
+            </div>
+            <div class="stat-card stat-danger">
+                <div class="stat-content">
+                    <div class="stat-number" style="font-size:1em;">Rp {{printf "%.0f" $pay.OtherTotal}}</div>
+                    <div class="stat-label">Lainnya</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{{end}}

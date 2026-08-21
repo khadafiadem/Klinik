@@ -1,0 +1,86 @@
+{{define "title"}}Pendaftaran{{end}}
+
+{{define "content"}}
+<div class="page-header">
+    <div>
+        <h1 class="page-title">Pendaftaran</h1>
+        <p class="page-subtitle">Daftar pendaftaran pasien hari ini</p>
+    </div>
+    <a href="/registrations/new" class="btn btn-primary">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Pendaftaran Baru
+    </a>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h3 class="card-title">Daftar Pendaftaran</h3>
+        <div class="card-actions">
+            <form method="GET" action="/registrations" style="display:flex;gap:8px;">
+                <input type="text" name="search" class="form-input" placeholder="Cari nomor/pasien/dokter..." value="{{.Search}}" style="max-width:300px;">
+                <button type="submit" class="btn btn-secondary">Cari</button>
+            </form>
+        </div>
+    </div>
+    <div class="card-body">
+        {{if .Data}}
+        <div class="table-responsive">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>No. Registrasi</th>
+                        <th>Pasien</th>
+                        <th>Dokter</th>
+                        <th>Tanggal</th>
+                        <th>Jenis</th>
+                        <th>Keluhan</th>
+                        <th>Status</th>
+                        <th>Aksi</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {{range .Data}}
+                    <tr>
+                        <td><span class="badge badge-info">{{.RegistrationNumber}}</span></td>
+                        <td>
+                            <strong>{{.PatientName}}</strong>
+                            <br><small class="text-muted">{{.PatientMRN}}</small>
+                        </td>
+                        <td>{{.DoctorName}}</td>
+                        <td>{{.RegistrationDate}}</td>
+                        <td><span class="badge badge-secondary">{{.RegistrationType}}</span></td>
+                        <td>{{if .Complaint}}{{.Complaint}}{{else}}<span class="text-muted">-</span>{{end}}</td>
+                        <td>
+                            {{if eq .Status "TERDAFTAR"}}
+                            <span class="badge badge-info">{{.Status}}</span>
+                            {{else if eq .Status "SEDANG_DIPERIKSA"}}
+                            <span class="badge badge-warning">{{.Status}}</span>
+                            {{else if eq .Status "SELESAI"}}
+                            <span class="badge badge-success">{{.Status}}</span>
+                            {{else}}
+                            <span class="badge badge-secondary">{{.Status}}</span>
+                            {{end}}
+                        </td>
+                        <td>
+                            {{if eq .Status "TERDAFTAR"}}
+                            <a href="/registrations/{{.ID}}/cancel" class="btn btn-danger btn-sm" onclick="return confirm('Batalkan pendaftaran ini?')">Batalkan</a>
+                            {{end}}
+                        </td>
+                    </tr>
+                    {{end}}
+                </tbody>
+            </table>
+        </div>
+        {{else}}
+        <div class="empty-state">
+            <div class="empty-state-icon">
+                <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
+            </div>
+            <h3>Belum ada pendaftaran</h3>
+            <p>Mulai dengan membuat pendaftaran baru untuk pasien</p>
+            <a href="/registrations/new" class="btn btn-primary">Pendaftaran Baru</a>
+        </div>
+        {{end}}
+    </div>
+</div>
+{{end}}

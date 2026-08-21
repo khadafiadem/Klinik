@@ -1,0 +1,39 @@
+{{define "title"}}Laporan Pendaftaran{{end}}
+
+{{define "content"}}
+{{$rs := .Data}}
+<div class="page-header">
+    <div>
+        <h1 class="page-title">Laporan Pendaftaran</h1>
+        <p class="page-subtitle">Ringkasan data pendaftaran</p>
+    </div>
+    <a href="/reports" class="btn btn-secondary">Kembali</a>
+</div>
+
+<div class="stat-grid">
+    <div class="stat-card stat-info">
+        <div class="stat-content">
+            <div class="stat-number">{{$rs.TotalToday}}</div>
+            <div class="stat-label">Hari Ini</div>
+        </div>
+    </div>
+    <div class="stat-card stat-success">
+        <div class="stat-content">
+            <div class="stat-number">{{$rs.TotalWeek}}</div>
+            <div class="stat-label">Minggu Ini</div>
+        </div>
+    </div>
+    <div class="stat-card stat-warning">
+        <div class="stat-content">
+            <div class="stat-number">{{$rs.TotalMonth}}</div>
+            <div class="stat-label">Bulan Ini</div>
+        </div>
+    </div>
+    <div class="stat-card stat-info">
+        <div class="stat-content">
+            <div class="stat-number">{{$rs.CompletedToday}}</div>
+            <div class="stat-label">Selesai Hari Ini</div>
+        </div>
+    </div>
+</div>
+{{end}}

@@ -1,0 +1,105 @@
+{{define "title"}}Pengaturan Klinik{{end}}
+
+{{define "content"}}
+<div class="page-header">
+    <div class="page-header-left">
+        <h1>Pengaturan Klinik</h1>
+        <span class="page-subtitle">Konfigurasi data dan pengaturan klinik</span>
+    </div>
+</div>
+
+<div class="page-body">
+    {{if .Success}}
+    <div class="alert alert-success">&#10004; {{.Success}}</div>
+    {{end}}
+
+    {{if .Error}}
+    <div class="alert alert-error">{{.Error}}</div>
+    {{end}}
+
+    <div class="card">
+        <div class="card-body">
+            <form method="POST" action="/clinic-settings">
+                <div class="form-section">
+                    <div class="form-section-title">
+                        <span class="section-icon" style="background:var(--primary-100);color:var(--primary-dark);">&#9734;</span>
+                        Informasi Klinik
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="clinic_name">Nama Klinik <span class="required">*</span></label>
+                            <input type="text" id="clinic_name" name="clinic_name" value="{{.Data.ClinicName}}" required placeholder="Nama klinik Anda">
+                        </div>
+                        <div class="form-group">
+                            <label for="clinic_phone">Telepon</label>
+                            <input type="text" id="clinic_phone" name="clinic_phone" value="{{.Data.ClinicPhone}}" placeholder="021xxxxxxxx">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="clinic_address">Alamat</label>
+                        <textarea id="clinic_address" name="clinic_address" rows="3" placeholder="Alamat lengkap klinik">{{.Data.ClinicAddress}}</textarea>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="clinic_email">Email</label>
+                            <input type="email" id="clinic_email" name="clinic_email" value="{{.Data.ClinicEmail}}" placeholder="info@klinik.com">
+                        </div>
+                        <div class="form-group">
+                            <label for="currency">Mata Uang</label>
+                            <input type="text" id="currency" name="currency" value="{{.Data.Currency}}" placeholder="IDR">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-section">
+                    <div class="form-section-title">
+                        <span class="section-icon" style="background:var(--success-light);color:var(--success-dark);">&#9201;</span>
+                        Jam Operasional
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="opening_time">Jam Buka</label>
+                            <input type="time" id="opening_time" name="opening_time" value="{{.Data.OpeningTime}}">
+                        </div>
+                        <div class="form-group">
+                            <label for="closing_time">Jam Tutup</label>
+                            <input type="time" id="closing_time" name="closing_time" value="{{.Data.ClosingTime}}">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-section">
+                    <div class="form-section-title">
+                        <span class="section-icon" style="background:var(--warning-light);color:var(--warning-dark);">&#9733;</span>
+                        Biaya & Kapasitas
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="registration_fee">Biaya Pendaftaran (Rp)</label>
+                            <input type="number" id="registration_fee" name="registration_fee" value="{{.Data.RegistrationFee}}" step="0.01" placeholder="0">
+                        </div>
+                        <div class="form-group">
+                            <label for="consultation_fee">Biaya Konsultasi Default (Rp)</label>
+                            <input type="number" id="consultation_fee" name="consultation_fee" value="{{.Data.ConsultationFee}}" step="0.01" placeholder="0">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="tax_percentage">Pajak (%)</label>
+                            <input type="number" id="tax_percentage" name="tax_percentage" value="{{.Data.TaxPercentage}}" step="0.01" placeholder="0">
+                        </div>
+                        <div class="form-group">
+                            <label for="max_patients_per_day">Maks Pasien / Hari</label>
+                            <input type="number" id="max_patients_per_day" name="max_patients_per_day" value="{{.Data.MaxPatientsPerDay}}" placeholder="50">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary">&#10004; Simpan Pengaturan</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{{end}}

@@ -1,0 +1,121 @@
+{{define "title"}}Antrian{{end}}
+
+{{define "content"}}
+<div class="page-header">
+    <div>
+        <h1 class="page-title">Antrian</h1>
+        <p class="page-subtitle">Manajemen antrian pasien hari ini</p>
+    </div>
+</div>
+
+<!-- Queue Stats -->
+<div class="stat-grid" style="margin-bottom:24px;">
+    <div class="stat-card stat-info">
+        <div class="stat-icon stat-icon-info">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        </div>
+        <div class="stat-content">
+            <div class="stat-number">{{(index .Data "Waiting")}}</div>
+            <div class="stat-label">Menunggu</div>
+        </div>
+    </div>
+    <div class="stat-card stat-warning">
+        <div class="stat-icon stat-icon-warning">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/></svg>
+        </div>
+        <div class="stat-content">
+            <div class="stat-number">{{(index .Data "InProgress")}}</div>
+            <div class="stat-label">Sedang Diperiksa</div>
+        </div>
+    </div>
+    <div class="stat-card stat-success">
+        <div class="stat-icon stat-icon-success">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+        </div>
+        <div class="stat-content">
+            <div class="stat-number">{{(index .Data "Completed")}}</div>
+            <div class="stat-label">Selesai</div>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h3 class="card-title">Antrian Hari Ini</h3>
+        <div class="card-actions">
+            <form method="GET" action="/queues" style="display:flex;gap:8px;">
+                <input type="date" name="date" class="form-input" value="{{(index .Data "Date")}}">
+                <button type="submit" class="btn btn-secondary">Tampilkan</button>
+            </form>
+        </div>
+    </div>
+    <div class="card-body">
+        {{if (index .Data "Queues")}}
+        <div class="table-responsive">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>No. Antrian</th>
+                        <th>Pasien</th>
+                        <th>Dokter</th>
+                        <th>No. Registrasi</th>
+                        <th>Status</th>
+                        <th>Aksi</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {{range (index .Data "Queues")}}
+                    <tr>
+                        <td><span class="badge badge-primary" style="font-size:1.1em;padding:8px 16px;">{{.QueueNumber}}</span></td>
+                        <td>
+                            <strong>{{.PatientName}}</strong>
+                            <br><small class="text-muted">{{.PatientMRN}}</small>
+                        </td>
+                        <td>{{.DoctorName}}</td>
+                        <td><span class="badge badge-info">{{.RegistrationNum}}</span></td>
+                        <td>
+                            {{if eq .Status "MENUNGGU"}}
+                            <span class="badge badge-secondary">{{.Status}}</span>
+                            {{else if eq .Status "DIPANGGIL"}}
+                            <span class="badge badge-info">{{.Status}}</span>
+                            {{else if eq .Status "SEDANG_DIPERIKSA"}}
+                            <span class="badge badge-warning">{{.Status}}</span>
+                            {{else if eq .Status "SELESAI"}}
+                            <span class="badge badge-success">{{.Status}}</span>
+                            {{else}}
+                            <span class="badge badge-secondary">{{.Status}}</span>
+                            {{end}}
+                        </td>
+                        <td>
+                            <div class="table-actions">
+                                {{if eq .Status "MENUNGGU"}}
+                                <a href="/queues/{{.ID}}/call" class="btn btn-info btn-sm">Panggil</a>
+                                {{end}}
+                                {{if eq .Status "DIPANGGIL"}}
+                                <a href="/queues/{{.ID}}/start" class="btn btn-warning btn-sm">Mulai Periksa</a>
+                                {{end}}
+                                {{if eq .Status "SEDANG_DIPERIKSA"}}
+                                <a href="/queues/{{.ID}}/complete" class="btn btn-success btn-sm">Selesai</a>
+                                {{end}}
+                                {{if and (ne .Status "SELESAI") (ne .Status "DIBATALKAN")}}
+                                <a href="/queues/{{.ID}}/cancel" class="btn btn-danger btn-sm" onclick="return confirm('Batalkan antrian ini?')">Batal</a>
+                                {{end}}
+                            </div>
+                        </td>
+                    </tr>
+                    {{end}}
+                </tbody>
+            </table>
+        </div>
+        {{else}}
+        <div class="empty-state">
+            <div class="empty-state-icon">
+                <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            </div>
+            <h3>Belum ada antrian</h3>
+            <p>Antrian akan muncul setelah pendaftaran pasien dibuat</p>
+        </div>
+        {{end}}
+    </div>
+</div>
+{{end}}

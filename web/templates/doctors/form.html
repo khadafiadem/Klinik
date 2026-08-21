@@ -1,0 +1,92 @@
+{{define "title"}}{{if .Data.ID}}Edit Dokter{{else}}Tambah Dokter{{end}}{{end}}
+
+{{define "content"}}
+<div class="page-header">
+    <div class="page-header-left">
+        <h1>{{if .Data.ID}}Edit Dokter{{else}}Tambah Dokter{{end}}</h1>
+        <span class="page-subtitle">{{if .Data.ID}}Perbarui data dokter{{else}}Masukkan data dokter baru{{end}}</span>
+    </div>
+    <div class="page-actions">
+        <a href="/doctors" class="btn btn-outline">&#8592; Kembali</a>
+    </div>
+</div>
+
+<div class="page-body">
+    {{if .Error}}
+    <div class="alert alert-error">{{.Error}}</div>
+    {{end}}
+
+    <div class="card">
+        <div class="card-body">
+            <form method="POST" action="/doctors/save">
+                {{if .Data.ID}}
+                <input type="hidden" name="id" value="{{.Data.ID}}">
+                {{end}}
+
+                <div class="form-section">
+                    <div class="form-section-title">
+                        <span class="section-icon" style="background:var(--primary-100);color:var(--primary-dark);">&#9764;</span>
+                        Informasi Dokter
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="doctor_code">Kode Dokter</label>
+                            <input type="text" id="doctor_code" name="doctor_code" value="{{.Data.DoctorCode}}" placeholder="Auto-generated jika kosong">
+                            <span class="form-hint">Kosongkan untuk auto-generate</span>
+                        </div>
+                        <div class="form-group">
+                            <label for="full_name">Nama Lengkap <span class="required">*</span></label>
+                            <input type="text" id="full_name" name="full_name" value="{{.Data.FullName}}" required placeholder="Dr. Nama Lengkap">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="specialization">Spesialisasi <span class="required">*</span></label>
+                            <input type="text" id="specialization" name="specialization" value="{{.Data.Specialization}}" required placeholder="Contoh: Umum, Anak, dll">
+                        </div>
+                        <div class="form-group">
+                            <label for="license_number">No. SIP</label>
+                            <input type="text" id="license_number" name="license_number" value="{{.Data.LicenseNumber}}" placeholder="Surat Izin Praktik">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-section">
+                    <div class="form-section-title">
+                        <span class="section-icon" style="background:var(--info-light);color:#1e40af;">&#9742;</span>
+                        Kontak & Status
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="phone">Telepon</label>
+                            <input type="text" id="phone" name="phone" value="{{.Data.Phone}}" placeholder="08xxxxxxxxxx">
+                        </div>
+                        <div class="form-group">
+                            <label for="email">Email</label>
+                            <input type="email" id="email" name="email" value="{{.Data.Email}}" placeholder="dokter@klinik.com">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="consultation_fee">Biaya Konsultasi (Rp)</label>
+                            <input type="number" id="consultation_fee" name="consultation_fee" value="{{.Data.ConsultationFee}}" step="0.01" placeholder="0">
+                        </div>
+                        <div class="form-group">
+                            <label for="is_active">Status</label>
+                            <select id="is_active" name="is_active">
+                                <option value="true" {{if .Data.IsActive}}selected{{end}}>Aktif</option>
+                                <option value="false" {{if not .Data.IsActive}}selected{{end}}>Nonaktif</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary">&#10004; Simpan</button>
+                    <a href="/doctors" class="btn btn-outline">Batal</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{{end}}

@@ -1,0 +1,151 @@
+{{define "title"}}Detail Rekam Medis{{end}}
+
+{{define "content"}}
+{{$mr := index .Data "Record"}}
+<div class="page-header">
+    <div>
+        <h1 class="page-title">Rekam Medis {{$mr.MedicalRecordNumber}}</h1>
+        <p class="page-subtitle">{{$mr.PatientName}} - {{$mr.ExaminationDate}}</p>
+    </div>
+    <div style="display:flex;gap:8px;">
+        {{if ne $mr.Status "CANCELLED"}}
+        <form method="POST" action="/medical-records/prescription/create" style="display:inline;" onsubmit="return confirm('Buat resep obat dari rekam medis ini?')">
+            <input type="hidden" name="medical_record_id" value="{{$mr.ID}}">
+            <button type="submit" class="btn btn-primary">Resep Obat</button>
+        </form>
+        {{end}}
+        {{if eq $mr.Status "DRAFT"}}
+        <a href="/medical-records/{{$mr.ID}}/finalize" class="btn btn-success" onclick="return confirm('Finalisasi rekam medis ini?')">Finalisasi</a>
+        {{end}}
+        <a href="/medical-records" class="btn btn-secondary">Kembali</a>
+    </div>
+</div>
+
+<!-- Info utama -->
+<div class="card" style="margin-bottom:24px;">
+    <div class="card-header">
+        <h3 class="card-title">Informasi Pemeriksaan</h3>
+        <span class="badge {{if eq $mr.Status "FINAL"}}badge-success{{else}}badge-secondary{{end}}">{{$mr.Status}}</span>
+    </div>
+    <div class="card-body">
+        <div class="form-row">
+            <div class="form-group"><label class="form-label">No. RM</label><p>{{$mr.MedicalRecordNumber}}</p></div>
+            <div class="form-group"><label class="form-label">Pasien</label><p>{{$mr.PatientName}} ({{$mr.PatientMRN}})</p></div>
+            <div class="form-group"><label class="form-label">Dokter</label><p>{{$mr.DoctorName}}</p></div>
+        </div>
+        <div class="form-group"><label class="form-label">Keluhan Utama</label><p>{{$mr.ChiefComplaint}}</p></div>
+        <div class="form-group"><label class="form-label">Anamnesis</label><p>{{$mr.Anamnesis}}</p></div>
+        <div class="form-group"><label class="form-label">Pemeriksaan Fisik</label><p>{{$mr.PhysicalExamination}}</p></div>
+        {{if $mr.Notes}}
+        <div class="form-group"><label class="form-label">Catatan</label><p>{{$mr.Notes}}</p></div>
+        {{end}}
+    </div>
+</div>
+
+<!-- Diagnosa -->
+<div class="card" style="margin-bottom:24px;">
+    <div class="card-header">
+        <h3 class="card-title">Diagnosa</h3>
+    </div>
+    <div class="card-body">
+        {{if $mr.Diagnoses}}
+        <table class="table" style="margin-bottom:16px;">
+            <thead><tr><th>Kode</th><th>Nama Diagnosa</th><th>Jenis</th><th>Aksi</th></tr></thead>
+            <tbody>
+            {{range $mr.Diagnoses}}
+            <tr>
+                <td><span class="badge badge-info">{{.DiagnosisCode}}</span></td>
+                <td>{{.DiagnosisName}}</td>
+                <td><span class="badge {{if eq .DiagnosisType "UTAMA"}}badge-primary{{else}}badge-secondary{{end}}">{{.DiagnosisType}}</span></td>
+                <td>
+                    {{if eq $mr.Status "DRAFT"}}
+                    <form method="POST" action="/medical-records/diagnosis/{{$.ID}}/{{.ID}}" style="display:inline;" onsubmit="return confirm('Hapus diagnosa ini?')">
+                        <button type="submit" class="btn btn-danger btn-sm">Hapus</button>
+                    </form>
+                    {{end}}
+                </td>
+            </tr>
+            {{end}}
+            </tbody>
+        </table>
+        {{else}}
+        <p class="text-muted">Belum ada diagnosa</p>
+        {{end}}
+
+        {{if eq $mr.Status "DRAFT"}}
+        <form method="POST" action="/medical-records/diagnosis/add" style="display:flex;gap:8px;align-items:end;">
+            <input type="hidden" name="medical_record_id" value="{{$mr.ID}}">
+            <div class="form-group" style="flex:1;">
+                <label class="form-label">Diagnosa</label>
+                <select name="diagnosis_id" class="form-select" required>
+                    <option value="">-- Pilih Diagnosa --</option>
+                    {{range (index .Data "Diagnoses")}}
+                    <option value="{{.ID}}">{{.DiagnosisCode}} - {{.Name}}</option>
+                    {{end}}
+                </select>
+            </div>
+            <div class="form-group" style="flex:0.5;">
+                <label class="form-label">Jenis</label>
+                <select name="diagnosis_type" class="form-select">
+                    <option value="UTAMA">Utama</option>
+                    <option value="SEKUNDER">Sekunder</option>
+                </select>
+            </div>
+            <button type="submit" class="btn btn-primary">Tambah</button>
+        </form>
+        {{end}}
+    </div>
+</div>
+
+<!-- Perawatan -->
+<div class="card" style="margin-bottom:24px;">
+    <div class="card-header">
+        <h3 class="card-title">Perawatan / Tindakan</h3>
+    </div>
+    <div class="card-body">
+        {{if $mr.Treatments}}
+        <table class="table" style="margin-bottom:16px;">
+            <thead><tr><th>Kode</th><th>Nama Tindakan</th><th>Biaya</th><th>Aksi</th></tr></thead>
+            <tbody>
+            {{range $mr.Treatments}}
+            <tr>
+                <td><span class="badge badge-info">{{.TreatmentCode}}</span></td>
+                <td>{{.TreatmentName}}</td>
+                <td>Rp {{printf "%.0f" .Cost}}</td>
+                <td>
+                    {{if eq $mr.Status "DRAFT"}}
+                    <form method="POST" action="/medical-records/treatment/{{$.ID}}/{{.ID}}" style="display:inline;" onsubmit="return confirm('Hapus tindakan ini?')">
+                        <button type="submit" class="btn btn-danger btn-sm">Hapus</button>
+                    </form>
+                    {{end}}
+                </td>
+            </tr>
+            {{end}}
+            </tbody>
+        </table>
+        {{else}}
+        <p class="text-muted">Belum ada tindakan</p>
+        {{end}}
+
+        {{if eq $mr.Status "DRAFT"}}
+        <form method="POST" action="/medical-records/treatment/add" style="display:flex;gap:8px;align-items:end;">
+            <input type="hidden" name="medical_record_id" value="{{$mr.ID}}">
+            <div class="form-group" style="flex:1;">
+                <label class="form-label">Tindakan</label>
+                <select name="treatment_id" class="form-select" id="treatmentSelect" required onchange="document.getElementById('treatmentCost').value=this.options[this.selectedIndex].dataset.cost||''">
+                    <option value="">-- Pilih Tindakan --</option>
+                    {{range (index .Data "Treatments")}}
+                    <option value="{{.ID}}" data-cost="{{.DefaultCost}}">{{.TreatmentCode}} - {{.Name}}</option>
+                    {{end}}
+                </select>
+            </div>
+            <div class="form-group" style="flex:0.5;">
+                <label class="form-label">Biaya</label>
+                <input type="number" name="cost" id="treatmentCost" class="form-input" value="0">
+            </div>
+            <button type="submit" class="btn btn-primary">Tambah</button>
+        </form>
+        {{end}}
+    </div>
+</div>
+{{end}}

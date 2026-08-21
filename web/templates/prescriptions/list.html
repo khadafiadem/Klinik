@@ -1,0 +1,76 @@
+{{define "title"}}Resep Obat{{end}}
+
+{{define "content"}}
+<div class="page-header">
+    <div>
+        <h1 class="page-title">Resep Obat</h1>
+        <p class="page-subtitle">Daftar resep obat pasien</p>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h3 class="card-title">Daftar Resep</h3>
+        <div class="card-actions">
+            <form method="GET" action="/prescriptions" style="display:flex;gap:8px;">
+                <input type="text" name="search" class="form-input" placeholder="Cari nomor/pasien..." value="{{.Search}}" style="max-width:300px;">
+                <button type="submit" class="btn btn-secondary">Cari</button>
+            </form>
+        </div>
+    </div>
+    <div class="card-body">
+        {{if .Data}}
+        <div class="table-responsive">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>No. Resep</th>
+                        <th>Pasien</th>
+                        <th>Dokter</th>
+                        <th>Tanggal</th>
+                        <th>Jumlah Obat</th>
+                        <th>Status</th>
+                        <th>Aksi</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {{range .Data}}
+                    <tr>
+                        <td><span class="badge badge-info">{{.PrescriptionNumber}}</span></td>
+                        <td>
+                            <strong>{{.PatientName}}</strong>
+                            <br><small class="text-muted">{{.PatientMRN}}</small>
+                        </td>
+                        <td>{{.DoctorName}}</td>
+                        <td>{{.PrescriptionDate}}</td>
+                        <td>{{.ItemCount}} obat</td>
+                        <td>
+                            {{if eq .Status "PENDING"}}
+                            <span class="badge badge-secondary">{{.Status}}</span>
+                            {{else if eq .Status "PROCESSING"}}
+                            <span class="badge badge-warning">{{.Status}}</span>
+                            {{else if eq .Status "COMPLETED"}}
+                            <span class="badge badge-success">{{.Status}}</span>
+                            {{else}}
+                            <span class="badge badge-secondary">{{.Status}}</span>
+                            {{end}}
+                        </td>
+                        <td>
+                            <a href="/prescriptions/{{.ID}}" class="btn btn-info btn-sm">Lihat</a>
+                        </td>
+                    </tr>
+                    {{end}}
+                </tbody>
+            </table>
+        </div>
+        {{else}}
+        <div class="empty-state">
+            <div class="empty-state-icon">
+                <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg>
+            </div>
+            <h3>Belum ada resep obat</h3>
+        </div>
+        {{end}}
+    </div>
+</div>
+{{end}}

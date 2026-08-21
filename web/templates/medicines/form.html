@@ -1,0 +1,120 @@
+{{define "title"}}Form Obat{{end}}
+
+{{define "content"}}
+{{$form := index .Data "Form"}}
+{{$edit := index .Data "Edit"}}
+<div class="page-header">
+    <div>
+        {{if $edit}}
+        <h1 class="page-title">Edit Obat</h1>
+        {{else}}
+        <h1 class="page-title">Tambah Obat Baru</h1>
+        {{end}}
+        <p class="page-subtitle">Data obat apotek</p>
+    </div>
+    <a href="/medicines" class="btn btn-secondary">Kembali</a>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h3 class="card-title">Form Obat</h3>
+    </div>
+    <div class="card-body">
+        {{if .Error}}
+        <div class="alert alert-danger">{{.Error}}</div>
+        {{end}}
+
+        <form method="POST" action="/medicines/save">
+            {{if $edit}}<input type="hidden" name="id" value="{{$form.ID}}">{{end}}
+
+            <div class="form-section">
+                <div class="form-section-title">Informasi Obat</div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">Kode Obat <span class="text-danger">*</span></label>
+                        <input type="text" name="medicine_code" class="form-input" value="{{$form.MedicineCode}}" required {{if $edit}}readonly{{end}}>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Nama Obat <span class="text-danger">*</span></label>
+                        <input type="text" name="name" class="form-input" value="{{$form.Name}}" required>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">Nama Generik</label>
+                        <input type="text" name="generic_name" class="form-input" value="{{$form.GenericName}}">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Bentuk</label>
+                        <select name="form" class="form-select">
+                            <option value="">-- Pilih --</option>
+                            <option value="Tablet" {{if eq $form.Form "Tablet"}}selected{{end}}>Tablet</option>
+                            <option value="Kapsul" {{if eq $form.Form "Kapsul"}}selected{{end}}>Kapsul</option>
+                            <option value="Sirup" {{if eq $form.Form "Sirup"}}selected{{end}}>Sirup</option>
+                            <option value="Salep" {{if eq $form.Form "Salep"}}selected{{end}}>Salep</option>
+                            <option value="Tetes" {{if eq $form.Form "Tetes"}}selected{{end}}>Tetes</option>
+                            <option value="Injeksi" {{if eq $form.Form "Injeksi"}}selected{{end}}>Injeksi</option>
+                            <option value="Puyer" {{if eq $form.Form "Puyer"}}selected{{end}}>Puyer</option>
+                            <option value="Lainnya" {{if eq $form.Form "Lainnya"}}selected{{end}}>Lainnya</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">Kategori</label>
+                        <select name="category_id" class="form-select">
+                            <option value="">-- Pilih --</option>
+                            {{range (index .Data "Categories")}}
+                            <option value="{{.ID}}">{{.Name}}</option>
+                            {{end}}
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Satuan</label>
+                        <select name="unit_id" class="form-select">
+                            <option value="">-- Pilih --</option>
+                            {{range (index .Data "Units")}}
+                            <option value="{{.ID}}">{{.Name}}</option>
+                            {{end}}
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-section">
+                <div class="form-section-title">Harga & Stok</div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">Harga Beli (Rp)</label>
+                        <input type="number" name="purchase_price" class="form-input" value="{{$form.PurchasePrice}}" min="0">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Harga Jual (Rp)</label>
+                        <input type="number" name="selling_price" class="form-input" value="{{$form.SellingPrice}}" min="0">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">Stok</label>
+                        <input type="number" name="stock" class="form-input" value="{{$form.Stock}}" min="0">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Stok Minimum</label>
+                        <input type="number" name="minimum_stock" class="form-input" value="{{$form.MinimumStock}}" min="0">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" style="display:flex;align-items:center;gap:8px;">
+                        <input type="checkbox" name="is_active" {{if or $form.IsActive (not $edit)}}checked{{end}}> Aktif
+                    </label>
+                </div>
+            </div>
+
+            <div class="form-actions">
+                <a href="/medicines" class="btn btn-secondary">Batal</a>
+                <button type="submit" class="btn btn-primary">Simpan</button>
+            </div>
+        </form>
+    </div>
+</div>
+{{end}}

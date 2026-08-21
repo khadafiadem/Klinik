@@ -1,0 +1,71 @@
+{{define "title"}}Pasien{{end}}
+
+{{define "content"}}
+<div class="page-header">
+    <div class="page-header-left">
+        <h1>Data Pasien</h1>
+        <span class="page-subtitle">Kelola data pasien klinik</span>
+    </div>
+    <div class="page-actions">
+        <a href="/patients/new" class="btn btn-primary">&#10010; Tambah Pasien</a>
+    </div>
+</div>
+
+<div class="page-body">
+    <div class="search-box">
+        <div class="search-container">
+            <span class="search-icon">&#128269;</span>
+            <input type="text" id="searchInput" placeholder="Cari nama, No. MR, NIK, atau telepon..." onkeyup="searchTable('searchInput', 'patientsTable')">
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-body" style="padding:0;">
+            <div class="table-wrapper">
+                {{if .Data}}
+                <table id="patientsTable">
+                    <thead>
+                        <tr>
+                            <th>No. MR</th>
+                            <th>Nama Pasien</th>
+                            <th>NIK</th>
+                            <th>Jenis Kelamin</th>
+                            <th>Tanggal Lahir</th>
+                            <th>Telepon</th>
+                            <th>Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {{range .Data}}
+                        <tr>
+                            <td><span class="table-code">{{.MedicalRecordNumber}}</span></td>
+                            <td><span class="table-name">{{.FullName}}</span></td>
+                            <td>{{.NIK}}</td>
+                            <td>{{if eq .Gender "LAKI_LAKI"}}Laki-laki{{else}}Perempuan{{end}}</td>
+                            <td>{{.DateOfBirth}}</td>
+                            <td>{{.Phone}}</td>
+                            <td>
+                                <div class="table-actions">
+                                    <a href="/patients/{{.ID}}/edit" class="btn btn-sm btn-outline">Edit</a>
+                                    <form method="POST" action="/patients/{{.ID}}/delete" onsubmit="return confirmDelete('{{.FullName}}')">
+                                        <button type="submit" class="btn btn-sm btn-danger">Hapus</button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                        {{end}}
+                    </tbody>
+                </table>
+                {{else}}
+                <div class="empty-state">
+                    <div class="empty-state-icon">&#9826;</div>
+                    <h3>Belum Ada Data Pasien</h3>
+                    <p>Mulai dengan menambahkan data pasien pertama ke dalam sistem.</p>
+                    <a href="/patients/new" class="btn btn-primary">&#10010; Tambah Pasien</a>
+                </div>
+                {{end}}
+            </div>
+        </div>
+    </div>
+</div>
+{{end}}

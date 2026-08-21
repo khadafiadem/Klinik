@@ -1,0 +1,156 @@
+{{define "title"}}{{if .Data.ID}}Edit Pasien{{else}}Tambah Pasien{{end}}{{end}}
+
+{{define "content"}}
+<div class="page-header">
+    <div class="page-header-left">
+        <h1>{{if .Data.ID}}Edit Pasien{{else}}Tambah Pasien{{end}}</h1>
+        <span class="page-subtitle">{{if .Data.ID}}Perbarui data pasien{{else}}Masukkan data pasien baru{{end}}</span>
+    </div>
+    <div class="page-actions">
+        <a href="/patients" class="btn btn-outline">&#8592; Kembali</a>
+    </div>
+</div>
+
+<div class="page-body">
+    {{if .Error}}
+    <div class="alert alert-error">{{.Error}}</div>
+    {{end}}
+
+    <div class="card">
+        <div class="card-body">
+            <form method="POST" action="/patients/save">
+                {{if .Data.ID}}
+                <input type="hidden" name="id" value="{{.Data.ID}}">
+                {{end}}
+
+                <div class="form-section">
+                    <div class="form-section-title">
+                        <span class="section-icon" style="background:var(--primary-100);color:var(--primary-dark);">&#9826;</span>
+                        Data Diri
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="full_name">Nama Lengkap <span class="required">*</span></label>
+                            <input type="text" id="full_name" name="full_name" value="{{.Data.FullName}}" required placeholder="Nama lengkap pasien">
+                        </div>
+                        <div class="form-group">
+                            <label for="nik">NIK</label>
+                            <input type="text" id="nik" name="nik" value="{{.Data.NIK}}" maxlength="16" placeholder="Nomor Induk Kependudukan">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="gender">Jenis Kelamin <span class="required">*</span></label>
+                            <select id="gender" name="gender" required>
+                                <option value="">-- Pilih --</option>
+                                <option value="LAKI_LAKI" {{if eq .Data.Gender "LAKI_LAKI"}}selected{{end}}>Laki-laki</option>
+                                <option value="PEREMPUAN" {{if eq .Data.Gender "PEREMPUAN"}}selected{{end}}>Perempuan</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="date_of_birth">Tanggal Lahir <span class="required">*</span></label>
+                            <input type="date" id="date_of_birth" name="date_of_birth" value="{{.Data.DateOfBirth}}" required>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="blood_type">Golongan Darah</label>
+                            <select id="blood_type" name="blood_type">
+                                <option value="">-- Pilih --</option>
+                                <option value="A" {{if eq .Data.BloodType "A"}}selected{{end}}>A</option>
+                                <option value="B" {{if eq .Data.BloodType "B"}}selected{{end}}>B</option>
+                                <option value="AB" {{if eq .Data.BloodType "AB"}}selected{{end}}>AB</option>
+                                <option value="O" {{if eq .Data.BloodType "O"}}selected{{end}}>O</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="phone">Telepon</label>
+                            <input type="text" id="phone" name="phone" value="{{.Data.Phone}}" placeholder="08xxxxxxxxxx">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="email">Email</label>
+                        <input type="email" id="email" name="email" value="{{.Data.Email}}" placeholder="pasien@email.com">
+                    </div>
+                    <div class="form-group">
+                        <label for="address">Alamat</label>
+                        <textarea id="address" name="address" rows="2" placeholder="Alamat lengkap pasien">{{.Data.Address}}</textarea>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="city">Kota</label>
+                            <input type="text" id="city" name="city" value="{{.Data.City}}" placeholder="Nama kota">
+                        </div>
+                        <div class="form-group">
+                            <label for="province">Provinsi</label>
+                            <input type="text" id="province" name="province" value="{{.Data.Province}}" placeholder="Nama provinsi">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="postal_code">Kode Pos</label>
+                        <input type="text" id="postal_code" name="postal_code" value="{{.Data.PostalCode}}" maxlength="5" placeholder="00000">
+                    </div>
+                </div>
+
+                <div class="form-section">
+                    <div class="form-section-title">
+                        <span class="section-icon" style="background:var(--danger-light);color:var(--danger-dark);">&#9888;</span>
+                        Kontak Darurat
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="emergency_contact_name">Nama</label>
+                            <input type="text" id="emergency_contact_name" name="emergency_contact_name" value="{{.Data.EmergencyContactName}}" placeholder="Nama kontak darurat">
+                        </div>
+                        <div class="form-group">
+                            <label for="emergency_contact_phone">Telepon</label>
+                            <input type="text" id="emergency_contact_phone" name="emergency_contact_phone" value="{{.Data.EmergencyContactPhone}}" placeholder="08xxxxxxxxxx">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="emergency_contact_relation">Hubungan</label>
+                        <input type="text" id="emergency_contact_relation" name="emergency_contact_relation" value="{{.Data.EmergencyContactRelation}}" placeholder="Contoh: Suami, Ibu, Anak, dll">
+                    </div>
+                </div>
+
+                <div class="form-section">
+                    <div class="form-section-title">
+                        <span class="section-icon" style="background:var(--success-light);color:var(--success-dark);">&#9733;</span>
+                        Asuransi
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="insurance_name">Nama Asuransi</label>
+                            <input type="text" id="insurance_name" name="insurance_name" value="{{.Data.InsuranceName}}" placeholder="Nama perusahaan asuransi">
+                        </div>
+                        <div class="form-group">
+                            <label for="insurance_number">No. Asuransi</label>
+                            <input type="text" id="insurance_number" name="insurance_number" value="{{.Data.InsuranceNumber}}" placeholder="Nomor kepesertaan">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-section">
+                    <div class="form-section-title">
+                        <span class="section-icon" style="background:var(--warning-light);color:var(--warning-dark);">&#9888;</span>
+                        Informasi Tambahan
+                    </div>
+                    <div class="form-group">
+                        <label for="allergies">Alergi</label>
+                        <textarea id="allergies" name="allergies" rows="2" placeholder="Sebutkan alergi yang diketahui">{{.Data.Allergies}}</textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="notes">Catatan</label>
+                        <textarea id="notes" name="notes" rows="2" placeholder="Catatan tambahan tentang pasien">{{.Data.Notes}}</textarea>
+                    </div>
+                </div>
+
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary">&#10004; Simpan</button>
+                    <a href="/patients" class="btn btn-outline">Batal</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{{end}}

@@ -1,0 +1,39 @@
+{{define "title"}}Laporan Pasien{{end}}
+
+{{define "content"}}
+{{$ps := .Data}}
+<div class="page-header">
+    <div>
+        <h1 class="page-title">Laporan Pasien</h1>
+        <p class="page-subtitle">Ringkasan data pasien</p>
+    </div>
+    <a href="/reports" class="btn btn-secondary">Kembali</a>
+</div>
+
+<div class="stat-grid">
+    <div class="stat-card stat-info">
+        <div class="stat-content">
+            <div class="stat-number">{{$ps.TotalPatients}}</div>
+            <div class="stat-label">Total Pasien</div>
+        </div>
+    </div>
+    <div class="stat-card stat-success">
+        <div class="stat-content">
+            <div class="stat-number">{{$ps.MalePatients}}</div>
+            <div class="stat-label">Laki-laki</div>
+        </div>
+    </div>
+    <div class="stat-card stat-danger">
+        <div class="stat-content">
+            <div class="stat-number">{{$ps.FemalePatients}}</div>
+            <div class="stat-label">Perempuan</div>
+        </div>
+    </div>
+    <div class="stat-card stat-warning">
+        <div class="stat-content">
+            <div class="stat-number">{{$ps.NewThisMonth}}</div>
+            <div class="stat-label">Baru Bulan Ini</div>
+        </div>
+    </div>
+</div>
+{{end}}

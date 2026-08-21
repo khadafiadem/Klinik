@@ -1,0 +1,75 @@
+{{define "title"}}Staff{{end}}
+
+{{define "content"}}
+<div class="page-header">
+    <div class="page-header-left">
+        <h1>Data Staff</h1>
+        <span class="page-subtitle">Kelola data staf klinik</span>
+    </div>
+    <div class="page-actions">
+        <a href="/staff/new" class="btn btn-primary">&#10010; Tambah Staff</a>
+    </div>
+</div>
+
+<div class="page-body">
+    <div class="search-box">
+        <div class="search-container">
+            <span class="search-icon">&#128269;</span>
+            <input type="text" id="searchInput" placeholder="Cari nama, kode, atau posisi..." onkeyup="searchTable('searchInput', 'staffTable')">
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-body" style="padding:0;">
+            <div class="table-wrapper">
+                {{if .Data}}
+                <table id="staffTable">
+                    <thead>
+                        <tr>
+                            <th>Kode</th>
+                            <th>Nama Staff</th>
+                            <th>Posisi</th>
+                            <th>Telepon</th>
+                            <th>Status</th>
+                            <th>Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {{range .Data}}
+                        <tr>
+                            <td><span class="table-code">{{.StaffCode}}</span></td>
+                            <td><span class="table-name">{{.FullName}}</span></td>
+                            <td>{{.Position}}</td>
+                            <td>{{.Phone}}</td>
+                            <td>
+                                {{if .IsActive}}
+                                <span class="badge badge-active">Aktif</span>
+                                {{else}}
+                                <span class="badge badge-inactive">Nonaktif</span>
+                                {{end}}
+                            </td>
+                            <td>
+                                <div class="table-actions">
+                                    <a href="/staff/{{.ID}}/edit" class="btn btn-sm btn-outline">Edit</a>
+                                    <form method="POST" action="/staff/{{.ID}}/delete" onsubmit="return confirmDelete('{{.FullName}}')">
+                                        <button type="submit" class="btn btn-sm btn-danger">Hapus</button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                        {{end}}
+                    </tbody>
+                </table>
+                {{else}}
+                <div class="empty-state">
+                    <div class="empty-state-icon">&#9881;</div>
+                    <h3>Belum Ada Data Staff</h3>
+                    <p>Mulai dengan menambahkan data staf pertama ke dalam sistem.</p>
+                    <a href="/staff/new" class="btn btn-primary">&#10010; Tambah Staff</a>
+                </div>
+                {{end}}
+            </div>
+        </div>
+    </div>
+</div>
+{{end}}

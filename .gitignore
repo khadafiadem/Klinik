@@ -1,0 +1,37 @@
+# Environment
+.env
+
+# Go
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+clinic-app
+clinic-app.exe
+
+# Test
+*.test
+*.out
+coverage.txt
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Dependencies
+vendor/
+
+# Build
+bin/
+dist/
+
+# Node (existing Next.js)
+node_modules/
+.next/

@@ -1,0 +1,79 @@
+{{define "title"}}Dashboard{{end}}
+
+{{define "content"}}
+<div class="page-header">
+    <div class="page-header-left">
+        <h1>Dashboard</h1>
+        <span class="page-subtitle">Ringkasan data klinik hari ini</span>
+    </div>
+</div>
+
+<div class="page-body">
+    <div class="welcome-banner">
+        <h2>Selamat Datang, {{.User.FullName}}!</h2>
+        <p>Berikut ringkasan aktivitas klinik untuk hari ini.</p>
+        <div class="welcome-date" id="currentDate"></div>
+    </div>
+
+    <div class="stat-grid">
+        <div class="stat-card">
+            <div class="stat-card-icon primary">&#9826;</div>
+            <div class="stat-card-info">
+                <div class="stat-card-value">{{if .Data}}{{index .Data "total_patients"}}{{else}}0{{end}}</div>
+                <div class="stat-card-label">Total Pasien</div>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-card-icon accent">&#9764;</div>
+            <div class="stat-card-info">
+                <div class="stat-card-value">{{if .Data}}{{index .Data "total_doctors"}}{{else}}0{{end}}</div>
+                <div class="stat-card-label">Total Dokter</div>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-card-icon success">&#9881;</div>
+            <div class="stat-card-info">
+                <div class="stat-card-value">{{if .Data}}{{index .Data "total_staff"}}{{else}}0{{end}}</div>
+                <div class="stat-card-label">Total Staff</div>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-card-icon warning">&#9733;</div>
+            <div class="stat-card-info">
+                <div class="stat-card-value">{{if .Data}}{{index .Data "today_registrations"}}{{else}}0{{end}}</div>
+                <div class="stat-card-label">Pendaftaran Hari Ini</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header">
+            <h2>Aksi Cepat</h2>
+        </div>
+        <div class="card-body">
+            <div class="quick-actions">
+                <a href="/patients/new" class="quick-action">
+                    <div class="quick-action-icon">&#10010;</div>
+                    <span class="quick-action-text">Tambah Pasien</span>
+                </a>
+                <a href="/doctors" class="quick-action">
+                    <div class="quick-action-icon">&#9764;</div>
+                    <span class="quick-action-text">Lihat Dokter</span>
+                </a>
+                <a href="/patients" class="quick-action">
+                    <div class="quick-action-icon">&#9826;</div>
+                    <span class="quick-action-text">Cari Pasien</span>
+                </a>
+                <a href="/clinic-settings" class="quick-action">
+                    <div class="quick-action-icon">&#9881;</div>
+                    <span class="quick-action-text">Pengaturan</span>
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.getElementById('currentDate').textContent = new Date().toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+</script>
+{{end}}

@@ -1,0 +1,73 @@
+{{define "title"}}Log Aktivitas{{end}}
+
+{{define "content"}}
+<div class="page-header">
+    <div>
+        <h1 class="page-title">Log Aktivitas</h1>
+        <p class="page-subtitle">Riwayat aktivitas sistem</p>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h3 class="card-title">Daftar Log Aktivitas</h3>
+        <div class="card-actions">
+            <form method="GET" action="/audit-logs" style="display:flex;gap:8px;">
+                <input type="text" name="search" class="form-input" placeholder="Cari aktivitas..." value="{{.Search}}" style="max-width:300px;">
+                <button type="submit" class="btn btn-secondary">Cari</button>
+            </form>
+        </div>
+    </div>
+    <div class="card-body">
+        {{if .Data}}
+        <div class="table-responsive">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Waktu</th>
+                        <th>Pengguna</th>
+                        <th>Aksi</th>
+                        <th>Entitas</th>
+                        <th>ID</th>
+                        <th>Deskripsi</th>
+                        <th>IP</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {{range .Data}}
+                    <tr>
+                        <td>{{.CreatedAt.Format "02 Jan 2006 15:04"}}</td>
+                        <td><strong>{{.UserName}}</strong></td>
+                        <td>
+                            {{if eq .Action "CREATE"}}
+                            <span class="badge badge-success">{{.Action}}</span>
+                            {{else if eq .Action "UPDATE"}}
+                            <span class="badge badge-warning">{{.Action}}</span>
+                            {{else if eq .Action "DELETE"}}
+                            <span class="badge badge-danger">{{.Action}}</span>
+                            {{else if eq .Action "LOGIN"}}
+                            <span class="badge badge-info">{{.Action}}</span>
+                            {{else}}
+                            <span class="badge badge-secondary">{{.Action}}</span>
+                            {{end}}
+                        </td>
+                        <td>{{.Entity}}</td>
+                        <td>{{if .EntityID}}{{.EntityID}}{{else}}-{{end}}</td>
+                        <td>{{if .Description}}{{.Description}}{{else}}-{{end}}</td>
+                        <td><small>{{.IPAddress}}</small></td>
+                    </tr>
+                    {{end}}
+                </tbody>
+            </table>
+        </div>
+        {{else}}
+        <div class="empty-state">
+            <div class="empty-state-icon">
+                <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+            </div>
+            <h3>Belum ada log aktivitas</h3>
+        </div>
+        {{end}}
+    </div>
+</div>
+{{end}}

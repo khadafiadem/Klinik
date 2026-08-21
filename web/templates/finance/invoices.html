@@ -1,0 +1,80 @@
+{{define "title"}}Tagihan{{end}}
+
+{{define "content"}}
+<div class="page-header">
+    <div>
+        <h1 class="page-title">Tagihan</h1>
+        <p class="page-subtitle">Daftar tagihan pasien</p>
+    </div>
+    <a href="/invoices/new" class="btn btn-primary">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Tagihan Baru
+    </a>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h3 class="card-title">Daftar Tagihan</h3>
+        <div class="card-actions">
+            <form method="GET" action="/invoices" style="display:flex;gap:8px;">
+                <input type="text" name="search" class="form-input" placeholder="Cari nomor/pasien..." value="{{.Search}}" style="max-width:300px;">
+                <button type="submit" class="btn btn-secondary">Cari</button>
+            </form>
+        </div>
+    </div>
+    <div class="card-body">
+        {{if .Data}}
+        <div class="table-responsive">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>No. Invoice</th>
+                        <th>Pasien</th>
+                        <th>Tanggal</th>
+                        <th>Total</th>
+                        <th>Status</th>
+                        <th>Aksi</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {{range .Data}}
+                    <tr>
+                        <td><span class="badge badge-info">{{.InvoiceNumber}}</span></td>
+                        <td>
+                            <strong>{{.PatientName}}</strong>
+                            <br><small class="text-muted">{{.PatientMRN}}</small>
+                        </td>
+                        <td>{{.InvoiceDate}}</td>
+                        <td><strong>Rp {{printf "%.0f" .Total}}</strong></td>
+                        <td>
+                            {{if eq .Status "BELUM_BAYAR"}}
+                            <span class="badge badge-danger">{{.Status}}</span>
+                            {{else if eq .Status "SUDAH_BAYAR"}}
+                            <span class="badge badge-success">{{.Status}}</span>
+                            {{else if eq .Status "SEBAGIAN"}}
+                            <span class="badge badge-warning">{{.Status}}</span>
+                            {{else}}
+                            <span class="badge badge-secondary">{{.Status}}</span>
+                            {{end}}
+                        </td>
+                        <td>
+                            <a href="/invoices/{{.ID}}" class="btn btn-info btn-sm">Lihat</a>
+                        </td>
+                    </tr>
+                    {{end}}
+                </tbody>
+            </table>
+        </div>
+        {{else}}
+        <div class="empty-state">
+            <div class="empty-state-icon">
+                <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="3" width="20" height="18" rx="2"/><line x1="2" y1="9" x2="22" y2="9"/></svg>
+            </div>
+            <h3>Belum ada tagihan</h3>
+            <p>Buat tagihan baru untuk pasien</p>
+            <a href="/invoices/new" class="btn btn-primary">Tagihan Baru</a>
+        </div>
+        {{end}}
+    </div>
+</div>
+{{end}}

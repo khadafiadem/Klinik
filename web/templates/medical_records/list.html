@@ -1,0 +1,80 @@
+{{define "title"}}Rekam Medis{{end}}
+
+{{define "content"}}
+<div class="page-header">
+    <div>
+        <h1 class="page-title">Rekam Medis</h1>
+        <p class="page-subtitle">Daftar rekam medis pasien</p>
+    </div>
+    <a href="/medical-records/new" class="btn btn-primary">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Rekam Medis Baru
+    </a>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h3 class="card-title">Daftar Rekam Medis</h3>
+        <div class="card-actions">
+            <form method="GET" action="/medical-records" style="display:flex;gap:8px;">
+                <input type="text" name="search" class="form-input" placeholder="Cari nomor/pasien/dokter..." value="{{.Search}}" style="max-width:300px;">
+                <button type="submit" class="btn btn-secondary">Cari</button>
+            </form>
+        </div>
+    </div>
+    <div class="card-body">
+        {{if .Data}}
+        <div class="table-responsive">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>No. RM</th>
+                        <th>Pasien</th>
+                        <th>Dokter</th>
+                        <th>Tanggal</th>
+                        <th>Keluhan</th>
+                        <th>Status</th>
+                        <th>Aksi</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {{range .Data}}
+                    <tr>
+                        <td><span class="badge badge-info">{{.MedicalRecordNumber}}</span></td>
+                        <td>
+                            <strong>{{.PatientName}}</strong>
+                            <br><small class="text-muted">{{.PatientMRN}}</small>
+                        </td>
+                        <td>{{.DoctorName}}</td>
+                        <td>{{.ExaminationDate}}</td>
+                        <td>{{if .ChiefComplaint}}{{.ChiefComplaint}}{{else}}<span class="text-muted">-</span>{{end}}</td>
+                        <td>
+                            {{if eq .Status "DRAFT"}}
+                            <span class="badge badge-secondary">{{.Status}}</span>
+                            {{else if eq .Status "FINAL"}}
+                            <span class="badge badge-success">{{.Status}}</span>
+                            {{else}}
+                            <span class="badge badge-warning">{{.Status}}</span>
+                            {{end}}
+                        </td>
+                        <td>
+                            <a href="/medical-records/{{.ID}}" class="btn btn-info btn-sm">Lihat</a>
+                        </td>
+                    </tr>
+                    {{end}}
+                </tbody>
+            </table>
+        </div>
+        {{else}}
+        <div class="empty-state">
+            <div class="empty-state-icon">
+                <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+            </div>
+            <h3>Belum ada rekam medis</h3>
+            <p>Mulai dengan membuat rekam medis baru</p>
+            <a href="/medical-records/new" class="btn btn-primary">Rekam Medis Baru</a>
+        </div>
+        {{end}}
+    </div>
+</div>
+{{end}}

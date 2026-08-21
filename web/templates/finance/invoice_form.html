@@ -1,0 +1,67 @@
+{{define "title"}}Tagihan Baru{{end}}
+
+{{define "content"}}
+<div class="page-header">
+    <div>
+        <h1 class="page-title">Tagihan Baru</h1>
+        <p class="page-subtitle">Buat tagihan untuk pasien</p>
+    </div>
+    <a href="/invoices" class="btn btn-secondary">Kembali</a>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h3 class="card-title">Form Tagihan</h3>
+    </div>
+    <div class="card-body">
+        {{if .Error}}
+        <div class="alert alert-danger">{{.Error}}</div>
+        {{end}}
+
+        <form method="POST" action="/invoices/save">
+            <div class="form-section">
+                <div class="form-section-title">Data Tagihan</div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">Pasien <span class="text-danger">*</span></label>
+                        <select name="patient_id" class="form-select" required>
+                            <option value="">-- Pilih Pasien --</option>
+                            {{range (index .Data "Patients")}}
+                            <option value="{{.ID}}">{{.FullName}} ({{.MedicalRecordNumber}})</option>
+                            {{end}}
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Tanggal Tagihan</label>
+                        <input type="date" name="invoice_date" class="form-input" value="{{now}}">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">No. Registrasi</label>
+                        <input type="number" name="registration_id" class="form-input" placeholder="ID (opsional)">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">No. Rekam Medis</label>
+                        <input type="number" name="medical_record_id" class="form-input" placeholder="ID (opsional)">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">Diskon (Rp)</label>
+                        <input type="number" name="discount" class="form-input" value="0" min="0">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Catatan</label>
+                        <input type="text" name="notes" class="form-input" placeholder="Catatan tagihan...">
+                    </div>
+                </div>
+            </div>
+            <div class="form-actions">
+                <a href="/invoices" class="btn btn-secondary">Batal</a>
+                <button type="submit" class="btn btn-primary">Buat Tagihan</button>
+            </div>
+        </form>
+    </div>
+</div>
+{{end}}

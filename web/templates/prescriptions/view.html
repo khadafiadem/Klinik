@@ -1,0 +1,139 @@
+{{define "title"}}Detail Resep{{end}}
+
+{{define "content"}}
+{{$rx := index .Data "Prescription"}}
+<div class="page-header">
+    <div>
+        <h1 class="page-title">Resep {{$rx.PrescriptionNumber}}</h1>
+        <p class="page-subtitle">{{$rx.PatientName}} - {{$rx.PrescriptionDate}}</p>
+    </div>
+    <div style="display:flex;gap:8px;">
+        {{if eq $rx.Status "PENDING"}}
+        <a href="/prescriptions/{{$rx.ID}}/process" class="btn btn-warning">Proses</a>
+        {{end}}
+        {{if eq $rx.Status "PROCESSING"}}
+        <a href="/prescriptions/{{$rx.ID}}/complete" class="btn btn-success" onclick="return confirm('Selesaikan resep dan kurangi stok obat?')">Serahkan Obat (Selesai)</a>
+        {{end}}
+        {{if and (ne $rx.Status "COMPLETED") (ne $rx.Status "CANCELLED")}}
+        <a href="/prescriptions/{{$rx.ID}}/cancel" class="btn btn-danger" onclick="return confirm('Batalkan resep ini?')">Batal</a>
+        {{end}}
+        <a href="/prescriptions" class="btn btn-secondary">Kembali</a>
+    </div>
+</div>
+
+{{if .Error}}
+<div class="alert alert-error" style="margin-bottom:16px;">{{.Error}}</div>
+{{end}}
+
+<!-- Info -->
+<div class="card" style="margin-bottom:24px;">
+    <div class="card-header">
+        <h3 class="card-title">Informasi Resep</h3>
+        <span class="badge {{if eq $rx.Status "COMPLETED"}}badge-success{{else if eq $rx.Status "PROCESSING"}}badge-warning{{else}}badge-secondary{{end}}">{{$rx.Status}}</span>
+    </div>
+    <div class="card-body">
+        <div class="form-row">
+            <div class="form-group"><label class="form-label">No. Resep</label><p>{{$rx.PrescriptionNumber}}</p></div>
+            <div class="form-group"><label class="form-label">No. RM</label><p>{{$rx.MedicalRecordNum}}</p></div>
+            <div class="form-group"><label class="form-label">Pasien</label><p>{{$rx.PatientName}} ({{$rx.PatientMRN}})</p></div>
+        </div>
+        <div class="form-row">
+            <div class="form-group"><label class="form-label">Dokter</label><p>{{$rx.DoctorName}}</p></div>
+            <div class="form-group"><label class="form-label">Tanggal</label><p>{{$rx.PrescriptionDate}}</p></div>
+        </div>
+        {{if $rx.Notes}}
+        <div class="form-group"><label class="form-label">Catatan</label><p>{{$rx.Notes}}</p></div>
+        {{end}}
+    </div>
+</div>
+
+<!-- Obat -->
+<div class="card" style="margin-bottom:24px;">
+    <div class="card-header">
+        <h3 class="card-title">Daftar Obat</h3>
+    </div>
+    <div class="card-body">
+        {{if $rx.Items}}
+        <div class="table-responsive">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Obat</th>
+                        <th>Kode</th>
+                        <th>Jumlah</th>
+                        <th>Dosis</th>
+                        <th>Frekuensi</th>
+                        <th>Durasi</th>
+                        <th>Instruksi</th>
+                        {{if eq $rx.Status "PENDING"}}<th>Aksi</th>{{end}}
+                    </tr>
+                </thead>
+                <tbody>
+                    {{range $rx.Items}}
+                    <tr>
+                        <td><strong>{{.MedicineName}}</strong></td>
+                        <td>{{.MedicineCode}}</td>
+                        <td>
+                            {{.Quantity}}
+                            {{if .MedicineID}}
+                            <br><small class="{{if lt .Stock .Quantity}}text-danger{{else}}text-muted{{end}}">Stok gudang: {{.Stock}}</small>
+                            {{end}}
+                        </td>
+                        <td>{{.Dosage}}</td>
+                        <td>{{.Frequency}}</td>
+                        <td>{{.Duration}}</td>
+                        <td>{{.Instructions}}</td>
+                        {{if eq $rx.Status "PENDING"}}
+                        <td>
+                            <form method="POST" action="/prescriptions/item/{{$.PrescriptionID}}/{{.ID}}" style="display:inline;" onsubmit="return confirm('Hapus obat ini?')">
+                                <button type="submit" class="btn btn-danger btn-sm">Hapus</button>
+                            </form>
+                        </td>
+                        {{end}}
+                    </tr>
+                    {{end}}
+                </tbody>
+            </table>
+        </div>
+        {{else}}
+        <p class="text-muted">Belum ada obat dalam resep ini</p>
+        {{end}}
+
+        {{if eq $rx.Status "PENDING"}}
+        <div style="margin-top:16px;padding-top:16px;border-top:1px solid var(--border-color);">
+            <h4 style="margin-bottom:12px;">Tambah Obat dari Stok Apotek</h4>
+            <form method="POST" action="/prescriptions/item/add">
+                <input type="hidden" name="prescription_id" value="{{$rx.ID}}">
+                <div class="form-row">
+                    <div class="form-group" style="flex:2;">
+                        <label class="form-label">Obat <span class="text-danger">*</span></label>
+                        <select name="medicine_id" class="form-select" id="medicineSelect" required onchange="
+                            var opt=this.options[this.selectedIndex];
+                            var info=document.getElementById('stockInfo');
+                            if(opt.value){info.textContent='Stok tersedia: '+opt.dataset.stock;info.className=opt.dataset.stock>0?'text-muted':'text-danger';}
+                            else{info.textContent='';}">
+                            <option value="">-- Pilih Obat --</option>
+                            {{range (index .Data "Medicines")}}
+                            <option value="{{.ID}}" data-stock="{{.Stock}}">{{.Name}} ({{.MedicineCode}}) - stok: {{.Stock}}</option>
+                            {{end}}
+                        </select>
+                        <small id="stockInfo" class="text-muted"></small>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Jumlah <span class="text-danger">*</span></label>
+                        <input type="number" name="quantity" class="form-input" value="1" min="1" required>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group"><label class="form-label">Dosis</label><input type="text" name="dosage" class="form-input" placeholder="1 tablet"></div>
+                    <div class="form-group"><label class="form-label">Frekuensi</label><input type="text" name="frequency" class="form-input" placeholder="3x sehari"></div>
+                    <div class="form-group"><label class="form-label">Durasi</label><input type="text" name="duration" class="form-input" placeholder="5 hari"></div>
+                </div>
+                <div class="form-group"><label class="form-label">Instruksi</label><input type="text" name="instructions" class="form-input" placeholder="Diminum setelah makan"></div>
+                <button type="submit" class="btn btn-primary" style="margin-top:12px;">Tambah Obat</button>
+            </form>
+        </div>
+        {{end}}
+    </div>
+</div>
+{{end}}

@@ -1,0 +1,116 @@
+{{define "title"}}Detail Tagihan{{end}}
+
+{{define "content"}}
+{{$inv := .Data}}
+<div class="page-header">
+    <div>
+        <h1 class="page-title">Tagihan {{$inv.InvoiceNumber}}</h1>
+        <p class="page-subtitle">{{$inv.PatientName}}</p>
+    </div>
+    <div style="display:flex;gap:8px;">
+        <a href="/payments/new?invoice_id={{$inv.ID}}&total={{$inv.Total}}" class="btn btn-success">Bayar</a>
+        <a href="/invoices" class="btn btn-secondary">Kembali</a>
+    </div>
+</div>
+
+<!-- Info -->
+<div class="card" style="margin-bottom:24px;">
+    <div class="card-header">
+        <h3 class="card-title">Informasi Tagihan</h3>
+        <span class="badge {{if eq $inv.Status "SUDAH_BAYAR"}}badge-success{{else if eq $inv.Status "SEBAGIAN"}}badge-warning{{else}}badge-danger{{end}}">{{$inv.Status}}</span>
+    </div>
+    <div class="card-body">
+        <div class="form-row">
+            <div class="form-group"><label class="form-label">No. Invoice</label><p>{{$inv.InvoiceNumber}}</p></div>
+            <div class="form-group"><label class="form-label">Pasien</label><p>{{$inv.PatientName}} ({{$inv.PatientMRN}})</p></div>
+            <div class="form-group"><label class="form-label">Tanggal</label><p>{{$inv.InvoiceDate}}</p></div>
+        </div>
+        <div class="form-row">
+            <div class="form-group"><label class="form-label">Subtotal</label><p>Rp {{printf "%.0f" $inv.Subtotal}}</p></div>
+            <div class="form-group"><label class="form-label">Diskon</label><p>Rp {{printf "%.0f" $inv.Discount}}</p></div>
+            <div class="form-group"><label class="form-label" style="font-size:1.1em;font-weight:700;">Total</label><p style="font-size:1.1em;font-weight:700;color:var(--primary);">Rp {{printf "%.0f" $inv.Total}}</p></div>
+        </div>
+        {{if $inv.Notes}}<div class="form-group"><label class="form-label">Catatan</label><p>{{$inv.Notes}}</p></div>{{end}}
+    </div>
+</div>
+
+<!-- Items -->
+<div class="card" style="margin-bottom:24px;">
+    <div class="card-header">
+        <h3 class="card-title">Detail Tagihan</h3>
+    </div>
+    <div class="card-body">
+        {{if $inv.Items}}
+        <table class="table" style="margin-bottom:16px;">
+            <thead><tr><th>Deskripsi</th><th>Qty</th><th>Harga</th><th>Total</th><th>Aksi</th></tr></thead>
+            <tbody>
+            {{range $inv.Items}}
+            <tr>
+                <td>{{.Description}}</td>
+                <td>{{.Quantity}}</td>
+                <td>Rp {{printf "%.0f" .UnitPrice}}</td>
+                <td><strong>Rp {{printf "%.0f" .TotalPrice}}</strong></td>
+                <td>
+                    <form method="POST" action="/invoices/item/{{$.InvoiceID}}/{{.ID}}" style="display:inline;" onsubmit="return confirm('Hapus item ini?')">
+                        <button type="submit" class="btn btn-danger btn-sm">Hapus</button>
+                    </form>
+                </td>
+            </tr>
+            {{end}}
+            </tbody>
+        </table>
+        {{else}}
+        <p class="text-muted">Belum ada detail tagihan</p>
+        {{end}}
+
+        <div style="margin-top:16px;padding-top:16px;border-top:1px solid var(--border-color);">
+            <h4 style="margin-bottom:12px;">Tambah Item</h4>
+            <form method="POST" action="/invoices/item/add">
+                <input type="hidden" name="invoice_id" value="{{$inv.ID}}">
+                <div class="form-row">
+                    <div class="form-group" style="flex:2;"><label class="form-label">Deskripsi <span class="text-danger">*</span></label><input type="text" name="description" class="form-input" required placeholder="Biaya konsultasi..."></div>
+                    <div class="form-group" style="flex:0.5;"><label class="form-label">Qty</label><input type="number" name="quantity" class="form-input" value="1" min="1"></div>
+                    <div class="form-group" style="flex:1;"><label class="form-label">Harga Satuan</label><input type="number" name="unit_price" class="form-input" value="0" min="0"></div>
+                    <div class="form-group" style="flex:1;"><label class="form-label">Jenis</label>
+                        <select name="item_type" class="form-select">
+                            <option value="KONSULTASI">Konsultasi</option>
+                            <option value="TINDAKAN">Tindakan</option>
+                            <option value="OBAT">Obat</option>
+                            <option value="LABORATORIUM">Laboratorium</option>
+                            <option value="LAINNYA">Lainnya</option>
+                        </select>
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-primary" style="margin-top:8px;">Tambah Item</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Payments -->
+<div class="card">
+    <div class="card-header">
+        <h3 class="card-title">Riwayat Pembayaran</h3>
+    </div>
+    <div class="card-body">
+        {{if $inv.Payments}}
+        <table class="table">
+            <thead><tr><th>No. Bayar</th><th>Tanggal</th><th>Jumlah</th><th>Metode</th><th>Status</th></tr></thead>
+            <tbody>
+            {{range $inv.Payments}}
+            <tr>
+                <td><span class="badge badge-info">{{.PaymentNumber}}</span></td>
+                <td>{{.PaymentDate}}</td>
+                <td><strong>Rp {{printf "%.0f" .Amount}}</strong></td>
+                <td>{{.PaymentMethod}}</td>
+                <td><span class="badge badge-success">{{.Status}}</span></td>
+            </tr>
+            {{end}}
+            </tbody>
+        </table>
+        {{else}}
+        <p class="text-muted">Belum ada pembayaran</p>
+        {{end}}
+    </div>
+</div>
+{{end}}

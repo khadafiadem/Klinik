@@ -1,0 +1,88 @@
+{{define "title"}}Pendaftaran Baru{{end}}
+
+{{define "content"}}
+<div class="page-header">
+    <div>
+        <h1 class="page-title">Pendaftaran Baru</h1>
+        <p class="page-subtitle">Daftarkan pasien baru untuk pemeriksaan</p>
+    </div>
+    <a href="/registrations" class="btn btn-secondary">Kembali</a>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h3 class="card-title">Form Pendaftaran</h3>
+    </div>
+    <div class="card-body">
+        {{if .Error}}
+        <div class="alert alert-danger">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+            {{.Error}}
+        </div>
+        {{end}}
+
+        <form method="POST" action="/registrations/save">
+            <div class="form-section">
+                <div class="form-section-title">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                    Data Pendaftaran
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">Pasien <span class="text-danger">*</span></label>
+                        <select name="patient_id" class="form-select" required>
+                            <option value="">-- Pilih Pasien --</option>
+                            {{range (index .Data "Patients")}}
+                            <option value="{{.ID}}">{{.FullName}} ({{.MedicalRecordNumber}})</option>
+                            {{end}}
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Dokter <span class="text-danger">*</span></label>
+                        <select name="doctor_id" class="form-select" required>
+                            <option value="">-- Pilih Dokter --</option>
+                            {{range (index .Data "Doctors")}}
+                            <option value="{{.ID}}">{{.FullName}} - {{.Specialization}}</option>
+                            {{end}}
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">Tanggal Daftar <span class="text-danger">*</span></label>
+                        <input type="date" name="registration_date" class="form-input" value="{{now}}" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Jenis Pendaftaran <span class="text-danger">*</span></label>
+                        <select name="registration_type" class="form-select" required>
+                            <option value="UMUM">Umum</option>
+                            <option value="BPJS">BPJS</option>
+                            <option value="ASURANSI">Asuransi</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Keluhan Utama</label>
+                    <textarea name="complaint" class="form-textarea" rows="3" placeholder="Deskripsikan keluhan pasien..."></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Catatan</label>
+                    <textarea name="notes" class="form-textarea" rows="2" placeholder="Catatan tambahan..."></textarea>
+                </div>
+            </div>
+
+            <div class="form-actions">
+                <a href="/registrations" class="btn btn-secondary">Batal</a>
+                <button type="submit" class="btn btn-primary">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+                    Simpan Pendaftaran
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{{end}}

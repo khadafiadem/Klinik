@@ -1,0 +1,131 @@
+{{define "title"}}Stok Obat{{end}}
+
+{{define "content"}}
+{{$med := index .Data "Medicine"}}
+<div class="page-header">
+    <div>
+        <h1 class="page-title">Stok: {{$med.Name}}</h1>
+        <p class="page-subtitle">{{$med.MedicineCode}}</p>
+    </div>
+    <a href="/medicines" class="btn btn-secondary">Kembali</a>
+</div>
+
+<!-- Info obat -->
+<div class="stat-grid" style="margin-bottom:24px;">
+    <div class="stat-card stat-info">
+        <div class="stat-content">
+            <div class="stat-number">{{$med.Stock}}</div>
+            <div class="stat-label">Stok Saat Ini</div>
+        </div>
+    </div>
+    <div class="stat-card stat-warning">
+        <div class="stat-content">
+            <div class="stat-number">{{$med.MinimumStock}}</div>
+            <div class="stat-label">Stok Minimum</div>
+        </div>
+    </div>
+    <div class="stat-card stat-success">
+        <div class="stat-content">
+            <div class="stat-number">Rp {{printf "%.0f" $med.SellingPrice}}</div>
+            <div class="stat-label">Harga Jual</div>
+        </div>
+    </div>
+</div>
+
+<!-- Tambah Stok -->
+<div class="card" style="margin-bottom:24px;">
+    <div class="card-header">
+        <h3 class="card-title">Tambah Stok Masuk</h3>
+    </div>
+    <div class="card-body">
+        <form method="POST" action="/medicines/stock/add" style="display:flex;gap:8px;align-items:end;flex-wrap:wrap;">
+            <input type="hidden" name="medicine_id" value="{{$med.ID}}">
+            <div class="form-group" style="flex:0.5;">
+                <label class="form-label">Jumlah <span class="text-danger">*</span></label>
+                <input type="number" name="quantity" class="form-input" value="1" min="1" required>
+            </div>
+            <div class="form-group" style="flex:0.5;">
+                <label class="form-label">No. Batch</label>
+                <input type="text" name="batch_number" class="form-input" placeholder="Batch-001">
+            </div>
+            <div class="form-group" style="flex:1;">
+                <label class="form-label">Catatan</label>
+                <input type="text" name="notes" class="form-input" placeholder="Pembelian dari supplier...">
+            </div>
+            <button type="submit" class="btn btn-success">+ Stok Masuk</button>
+        </form>
+    </div>
+</div>
+
+<!-- Kurangi Stok -->
+<div class="card" style="margin-bottom:24px;">
+    <div class="card-header">
+        <h3 class="card-title">Kurangi Stok</h3>
+    </div>
+    <div class="card-body">
+        <form method="POST" action="/medicines/stock/reduce" style="display:flex;gap:8px;align-items:end;flex-wrap:wrap;">
+            <input type="hidden" name="medicine_id" value="{{$med.ID}}">
+            <div class="form-group" style="flex:0.5;">
+                <label class="form-label">Jumlah <span class="text-danger">*</span></label>
+                <input type="number" name="quantity" class="form-input" value="1" min="1" max="{{$med.Stock}}" required>
+            </div>
+            <div class="form-group" style="flex:0.5;">
+                <label class="form-label">No. Batch</label>
+                <input type="text" name="batch_number" class="form-input">
+            </div>
+            <div class="form-group" style="flex:1;">
+                <label class="form-label">Catatan</label>
+                <input type="text" name="notes" class="form-input" placeholder="Penggunaan resep...">
+            </div>
+            <button type="submit" class="btn btn-danger" onclick="return confirm('Kurangi stok ini?')">- Stok Keluar</button>
+        </form>
+    </div>
+</div>
+
+<!-- Riwayat Stok -->
+<div class="card">
+    <div class="card-header">
+        <h3 class="card-title">Riwayat Transaksi Stok</h3>
+    </div>
+    <div class="card-body">
+        {{if (index .Data "Transactions")}}
+        <div class="table-responsive">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Tanggal</th>
+                        <th>Jenis</th>
+                        <th>Jumlah</th>
+                        <th>No. Batch</th>
+                        <th>Catatan</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {{range (index .Data "Transactions")}}
+                    <tr>
+                        <td>{{.CreatedAt.Format "02 Jan 2006 15:04"}}</td>
+                        <td>
+                            {{if eq .TransactionType "MASUK"}}
+                            <span class="badge badge-success">MASUK</span>
+                            {{else if eq .TransactionType "KELUAR"}}
+                            <span class="badge badge-danger">KELUAR</span>
+                            {{else}}
+                            <span class="badge badge-warning">{{.TransactionType}}</span>
+                            {{end}}
+                        </td>
+                        <td>
+                            {{if eq .TransactionType "MASUK"}}+{{else}}-{{end}}{{.Quantity}}
+                        </td>
+                        <td>{{if .BatchNumber}}{{.BatchNumber}}{{else}}-{{end}}</td>
+                        <td>{{if .Notes}}{{.Notes}}{{else}}-{{end}}</td>
+                    </tr>
+                    {{end}}
+                </tbody>
+            </table>
+        </div>
+        {{else}}
+        <p class="text-muted">Belum ada transaksi stok</p>
+        {{end}}
+    </div>
+</div>
+{{end}}

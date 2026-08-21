@@ -1,0 +1,69 @@
+{{define "title"}}Bayar Tagihan{{end}}
+
+{{define "content"}}
+<div class="page-header">
+    <div>
+        <h1 class="page-title">Bayar Tagihan</h1>
+        <p class="page-subtitle">Proses pembayaran tagihan</p>
+    </div>
+    <a href="javascript:history.back()" class="btn btn-secondary">Kembali</a>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h3 class="card-title">Form Pembayaran</h3>
+    </div>
+    <div class="card-body">
+        {{if .Error}}
+        <div class="alert alert-danger">{{.Error}}</div>
+        {{end}}
+
+        <form method="POST" action="/payments/save">
+            <div class="form-section">
+                <div class="form-section-title">Data Pembayaran</div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">ID Tagihan <span class="text-danger">*</span></label>
+                        <input type="number" name="invoice_id" class="form-input" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Tanggal Bayar</label>
+                        <input type="date" name="payment_date" class="form-input" value="{{now}}">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">Jumlah Bayar (Rp) <span class="text-danger">*</span></label>
+                        <input type="number" name="amount" class="form-input" min="1" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Metode Pembayaran <span class="text-danger">*</span></label>
+                        <select name="payment_method" class="form-select" required>
+                            <option value="CASH">Tunai</option>
+                            <option value="BANK_TRANSFER">Transfer Bank</option>
+                            <option value="QRIS">QRIS</option>
+                            <option value="DEBIT">Kartu Debit</option>
+                            <option value="CREDIT_CARD">Kartu Kredit</option>
+                            <option value="BPJS">BPJS</option>
+                            <option value="OTHER">Lainnya</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">No. Referensi</label>
+                        <input type="text" name="reference_number" class="form-input" placeholder="No. transfer/bukti...">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Catatan</label>
+                        <input type="text" name="notes" class="form-input" placeholder="Catatan pembayaran...">
+                    </div>
+                </div>
+            </div>
+            <div class="form-actions">
+                <button type="submit" class="btn btn-success">Proses Pembayaran</button>
+            </div>
+        </form>
+    </div>
+</div>
+{{end}}

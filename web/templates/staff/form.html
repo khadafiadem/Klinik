@@ -1,0 +1,82 @@
+{{define "title"}}{{if .Data.ID}}Edit Staff{{else}}Tambah Staff{{end}}{{end}}
+
+{{define "content"}}
+<div class="page-header">
+    <div class="page-header-left">
+        <h1>{{if .Data.ID}}Edit Staff{{else}}Tambah Staff{{end}}</h1>
+        <span class="page-subtitle">{{if .Data.ID}}Perbarui data staf{{else}}Masukkan data staf baru{{end}}</span>
+    </div>
+    <div class="page-actions">
+        <a href="/staff" class="btn btn-outline">&#8592; Kembali</a>
+    </div>
+</div>
+
+<div class="page-body">
+    {{if .Error}}
+    <div class="alert alert-error">{{.Error}}</div>
+    {{end}}
+
+    <div class="card">
+        <div class="card-body">
+            <form method="POST" action="/staff/save">
+                {{if .Data.ID}}
+                <input type="hidden" name="id" value="{{.Data.ID}}">
+                {{end}}
+
+                <div class="form-section">
+                    <div class="form-section-title">
+                        <span class="section-icon" style="background:var(--accent-light);color:var(--accent-dark);">&#9881;</span>
+                        Informasi Staff
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="staff_code">Kode Staff</label>
+                            <input type="text" id="staff_code" name="staff_code" value="{{.Data.StaffCode}}" placeholder="Auto-generated jika kosong">
+                            <span class="form-hint">Kosongkan untuk auto-generate</span>
+                        </div>
+                        <div class="form-group">
+                            <label for="full_name">Nama Lengkap <span class="required">*</span></label>
+                            <input type="text" id="full_name" name="full_name" value="{{.Data.FullName}}" required placeholder="Nama lengkap staff">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="position">Posisi <span class="required">*</span></label>
+                            <input type="text" id="position" name="position" value="{{.Data.Position}}" required placeholder="Contoh: Resepsionis, Perawat, dll">
+                        </div>
+                        <div class="form-group">
+                            <label for="phone">Telepon</label>
+                            <input type="text" id="phone" name="phone" value="{{.Data.Phone}}" placeholder="08xxxxxxxxxx">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-section">
+                    <div class="form-section-title">
+                        <span class="section-icon" style="background:var(--success-light);color:var(--success-dark);">&#9993;</span>
+                        Email & Status
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="email">Email</label>
+                            <input type="email" id="email" name="email" value="{{.Data.Email}}" placeholder="staff@klinik.com">
+                        </div>
+                        <div class="form-group">
+                            <label for="is_active">Status</label>
+                            <select id="is_active" name="is_active">
+                                <option value="true" {{if .Data.IsActive}}selected{{end}}>Aktif</option>
+                                <option value="false" {{if not .Data.IsActive}}selected{{end}}>Nonaktif</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary">&#10004; Simpan</button>
+                    <a href="/staff" class="btn btn-outline">Batal</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{{end}}

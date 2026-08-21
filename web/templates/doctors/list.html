@@ -1,0 +1,77 @@
+{{define "title"}}Dokter{{end}}
+
+{{define "content"}}
+<div class="page-header">
+    <div class="page-header-left">
+        <h1>Data Dokter</h1>
+        <span class="page-subtitle">Kelola data dokter klinik</span>
+    </div>
+    <div class="page-actions">
+        <a href="/doctors/new" class="btn btn-primary">&#10010; Tambah Dokter</a>
+    </div>
+</div>
+
+<div class="page-body">
+    <div class="search-box">
+        <div class="search-container">
+            <span class="search-icon">&#128269;</span>
+            <input type="text" id="searchInput" placeholder="Cari nama, kode, atau spesialisasi..." onkeyup="searchTable('searchInput', 'doctorsTable')">
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-body" style="padding:0;">
+            <div class="table-wrapper">
+                {{if .Data}}
+                <table id="doctorsTable">
+                    <thead>
+                        <tr>
+                            <th>Kode</th>
+                            <th>Nama Dokter</th>
+                            <th>Spesialisasi</th>
+                            <th>No. Telepon</th>
+                            <th>Biaya Konsul</th>
+                            <th>Status</th>
+                            <th>Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {{range .Data}}
+                        <tr>
+                            <td><span class="table-code">{{.DoctorCode}}</span></td>
+                            <td><span class="table-name">{{.FullName}}</span></td>
+                            <td>{{.Specialization}}</td>
+                            <td>{{.Phone}}</td>
+                            <td><strong>Rp {{printf "%.0f" .ConsultationFee}}</strong></td>
+                            <td>
+                                {{if .IsActive}}
+                                <span class="badge badge-active">Aktif</span>
+                                {{else}}
+                                <span class="badge badge-inactive">Nonaktif</span>
+                                {{end}}
+                            </td>
+                            <td>
+                                <div class="table-actions">
+                                    <a href="/doctors/{{.ID}}/edit" class="btn btn-sm btn-outline">Edit</a>
+                                    <form method="POST" action="/doctors/{{.ID}}/delete" onsubmit="return confirmDelete('{{.FullName}}')">
+                                        <button type="submit" class="btn btn-sm btn-danger">Hapus</button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                        {{end}}
+                    </tbody>
+                </table>
+                {{else}}
+                <div class="empty-state">
+                    <div class="empty-state-icon">&#9764;</div>
+                    <h3>Belum Ada Data Dokter</h3>
+                    <p>Mulai dengan menambahkan data dokter pertama ke dalam sistem.</p>
+                    <a href="/doctors/new" class="btn btn-primary">&#10010; Tambah Dokter</a>
+                </div>
+                {{end}}
+            </div>
+        </div>
+    </div>
+</div>
+{{end}}

@@ -1,0 +1,73 @@
+{{define "title"}}Dashboard Laporan{{end}}
+
+{{define "content"}}
+<div class="page-header">
+    <div>
+        <h1 class="page-title">Dashboard Laporan</h1>
+        <p class="page-subtitle">Ringkasan data klinik</p>
+    </div>
+</div>
+
+<!-- Summary Cards -->
+<div class="stat-grid" style="margin-bottom:24px;">
+    <a href="/reports/patients" class="stat-card stat-info" style="text-decoration:none;color:inherit;">
+        <div class="stat-content">
+            <div class="stat-number">{{(index .Data "Patients").TotalPatients}}</div>
+            <div class="stat-label">Total Pasien</div>
+            <small style="color:var(--text-muted);">{{(index .Data "Patients").NewThisMonth}} baru bulan ini</small>
+        </div>
+    </a>
+    <a href="/reports/registrations" class="stat-card stat-success" style="text-decoration:none;color:inherit;">
+        <div class="stat-content">
+            <div class="stat-number">{{(index .Data "Regs").TotalToday}}</div>
+            <div class="stat-label">Pendaftaran Hari Ini</div>
+            <small style="color:var(--text-muted);">{{(index .Data "Regs").TotalMonth}} bulan ini</small>
+        </div>
+    </a>
+    <a href="/reports/revenue" class="stat-card stat-warning" style="text-decoration:none;color:inherit;">
+        <div class="stat-content">
+            <div class="stat-number">Rp {{printf "%.0f" (index .Data "Revenue").TodayRevenue}}</div>
+            <div class="stat-label">Pendapatan Hari Ini</div>
+            <small style="color:var(--text-muted);">Rp {{printf "%.0f" (index .Data "Revenue").MonthRevenue}} bulan ini</small>
+        </div>
+    </a>
+    <a href="/reports/medicines" class="stat-card stat-danger" style="text-decoration:none;color:inherit;">
+        <div class="stat-content">
+            <div class="stat-number">{{(index .Data "Medicines").LowStockCount}}</div>
+            <div class="stat-label">Stok Menipis</div>
+            <small style="color:var(--text-muted);">{{(index .Data "Medicines").TotalMedicines}} total obat</small>
+        </div>
+    </a>
+</div>
+
+<!-- Quick Links -->
+<div class="card">
+    <div class="card-header">
+        <h3 class="card-title">Laporan Tersedia</h3>
+    </div>
+    <div class="card-body">
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:16px;">
+            <a href="/reports/patients" class="stat-card stat-info" style="text-decoration:none;color:inherit;text-align:center;">
+                <div class="stat-number" style="font-size:1.5em;">&#9826;</div>
+                <div class="stat-label">Laporan Pasien</div>
+            </a>
+            <a href="/reports/registrations" class="stat-card stat-success" style="text-decoration:none;color:inherit;text-align:center;">
+                <div class="stat-number" style="font-size:1.5em;">&#9998;</div>
+                <div class="stat-label">Laporan Pendaftaran</div>
+            </a>
+            <a href="/reports/doctors" class="stat-card stat-info" style="text-decoration:none;color:inherit;text-align:center;">
+                <div class="stat-number" style="font-size:1.5em;">&#9764;</div>
+                <div class="stat-label">Aktivitas Dokter</div>
+            </a>
+            <a href="/reports/revenue" class="stat-card stat-success" style="text-decoration:none;color:inherit;text-align:center;">
+                <div class="stat-number" style="font-size:1.5em;">&#9998;</div>
+                <div class="stat-label">Laporan Pendapatan</div>
+            </a>
+            <a href="/reports/medicines" class="stat-card stat-warning" style="text-decoration:none;color:inherit;text-align:center;">
+                <div class="stat-number" style="font-size:1.5em;">&#9764;</div>
+                <div class="stat-label">Laporan Stok Obat</div>
+            </a>
+        </div>
+    </div>
+</div>
+{{end}}
