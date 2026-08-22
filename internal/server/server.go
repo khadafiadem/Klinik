@@ -183,6 +183,12 @@ func (s *Server) registerWebRoutes(mux *http.ServeMux) {
 
 	mux.HandleFunc("/audit-logs", protected(admin, s.wh.AuditLogsList))
 
+	mux.HandleFunc("/users", protected(admin, s.wh.UsersList))
+	mux.HandleFunc("/users/new", protected(admin, s.wh.UserForm))
+	mux.HandleFunc("/users/save", protected(admin, s.wh.UserSave))
+	mux.HandleFunc("/users/delete", protected(admin, s.wh.UserDelete))
+	mux.HandleFunc("/users/", protected(admin, s.wh.UserForm))
+
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path == "/" {
 			http.Redirect(w, r, "/dashboard", http.StatusSeeOther)

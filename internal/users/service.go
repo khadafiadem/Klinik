@@ -121,3 +121,31 @@ func (s *Service) AssignRole(userID, roleID int) error {
 
 	return s.repo.AssignRole(userID, roleID)
 }
+
+func (s *Service) GetAllRoles() ([]RoleInfo, error) {
+	return s.repo.GetAllRoles()
+}
+
+func (s *Service) AssignPrimaryRole(userID, roleID int) error {
+	if _, err := s.repo.GetByID(userID); err != nil {
+		return fmt.Errorf("user tidak ditemukan")
+	}
+	if _, err := s.repo.GetRoleByID(roleID); err != nil {
+		return fmt.Errorf("role tidak valid")
+	}
+	return s.repo.ReplaceUserRole(userID, roleID)
+}
+
+func (s *Service) SetPassword(id int, password string) error {
+	if len(password) < 6 {
+		return fmt.Errorf("password minimal 6 karakter")
+	}
+	if _, err := s.repo.GetByID(id); err != nil {
+		return fmt.Errorf("user tidak ditemukan")
+	}
+	hash, err := auth.HashPassword(password)
+	if err != nil {
+		return err
+	}
+	return s.repo.UpdatePassword(id, hash)
+}

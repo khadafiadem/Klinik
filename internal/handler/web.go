@@ -19,6 +19,7 @@ import (
 	"klinik-app/internal/registrations"
 	"klinik-app/internal/reports"
 	"klinik-app/internal/staff"
+	"klinik-app/internal/users"
 )
 
 type WebHandler struct {
@@ -35,6 +36,7 @@ type WebHandler struct {
 	finSvc      *finance.Service
 	rptSvc      *reports.Service
 	auditSvc    *audit.Service
+	userSvc     *users.Service
 	rl          *middleware.RateLimiter
 }
 
@@ -53,6 +55,7 @@ func NewWebHandler(db *sql.DB, authService *auth.Service, rl *middleware.RateLim
 		finSvc:      finance.NewService(db),
 		rptSvc:      reports.NewService(db),
 		auditSvc:    audit.NewService(db),
+		userSvc:     users.NewService(db),
 		rl:          rl,
 	}
 }

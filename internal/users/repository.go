@@ -207,6 +207,24 @@ func (r *Repository) EmailExists(email string) (bool, error) {
 	return count > 0, nil
 }
 
+func (r *Repository) GetAllRoles() ([]RoleInfo, error) {
+	rows, err := r.db.Query(`SELECT id, name FROM roles ORDER BY id`)
+	if err != nil {
+		return nil, fmt.Errorf("gagal mengambil daftar role: %w", err)
+	}
+	defer rows.Close()
+
+	var roles []RoleInfo
+	for rows.Next() {
+		var role RoleInfo
+		if err := rows.Scan(&role.ID, &role.Name); err != nil {
+			return nil, fmt.Errorf("gagal scan role: %w", err)
+		}
+		roles = append(roles, role)
+	}
+	return roles, nil
+}
+
 func (r *Repository) GetRoleByID(id int) (*RoleInfo, error) {
 	role := &RoleInfo{}
 	query := `SELECT id, name FROM roles WHERE id = $1`
@@ -224,4 +242,35 @@ func (r *Repository) AssignRole(userID, roleID int) error {
 	query := `INSERT INTO user_roles (user_id, role_id) VALUES ($1, $2) ON CONFLICT DO NOTHING`
 	_, err := r.db.Exec(query, userID, roleID)
 	return err
+}
+
+func (r *Repository) ReplaceUserRole(userID, roleID int) error {
+	tx, err := r.db.Begin()
+	if err != nil {
+		return fmt.Errorf("gagal memulai transaksi: %w", err)
+	}
+	defer tx.Rollback()
+
+	if _, err := tx.Exec(`DELETE FROM user_roles WHERE user_id = $1`, userID); err != nil {
+		return fmt.Errorf("gagal menghapus role lama: %w", err)
+	}
+	if _, err := tx.Exec(`INSERT INTO user_roles (user_id, role_id) VALUES ($1, $2)`, userID, roleID); err != nil {
+		return fmt.Errorf("gagal assign role: %w", err)
+	}
+	return tx.Commit()
+}
+
+func (r *Repository) UpdatePassword(id int, passwordHash string) error {
+	result, err := r.db.Exec(`UPDATE users SET password_hash = $1, updated_at = NOW() WHERE id = $2`, passwordHash, id)
+	if err != nil {
+		return fmt.Errorf("gagal update password: %w", err)
+	}
+	rows, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if rows == 0 {
+		return fmt.Errorf("user tidak ditemukan")
+	}
+	return nil
 }

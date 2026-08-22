@@ -1,0 +1,93 @@
+{{define "title"}}{{if .Data.Target}}Edit Pengguna{{else}}Tambah Pengguna{{end}}{{end}}
+
+{{define "content"}}
+<div class="page-header">
+    <div class="page-header-left">
+        <h1>{{if .Data.Target}}Edit Pengguna{{else}}Tambah Pengguna{{end}}</h1>
+        <span class="page-subtitle">{{if .Data.Target}}Perbarui data akun pengguna{{else}}Buat akun login baru untuk sistem{{end}}</span>
+    </div>
+    <div class="page-actions">
+        <a href="/users" class="btn btn-outline">&#8592; Kembali</a>
+    </div>
+</div>
+
+<div class="page-body">
+    {{if .Error}}
+    <div class="alert alert-error">{{.Error}}</div>
+    {{end}}
+
+    <div class="card">
+        <div class="card-body">
+            <form method="POST" action="/users/save">
+                {{if .Data.Target}}
+                <input type="hidden" name="id" value="{{.Data.Target.ID}}">
+                {{end}}
+
+                <div class="form-section">
+                    <div class="form-section-title">
+                        <span class="section-icon" style="background:var(--accent-light);color:var(--accent-dark);">&#128100;</span>
+                        Akun
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="username">Username <span class="required">*</span></label>
+                            <input type="text" id="username" name="username" value="{{if .Data.Target}}{{.Data.Target.Username}}{{else}}{{.Data.Form.username}}{{end}}" required placeholder="username unik" {{if .Data.Target}}readonly style="background:var(--bg-secondary);cursor:not-allowed;"{{end}}>
+                            {{if .Data.Target}}<span class="form-hint">Username tidak dapat diubah</span>{{end}}
+                        </div>
+                        <div class="form-group">
+                            <label for="full_name">Nama Lengkap <span class="required">*</span></label>
+                            <input type="text" id="full_name" name="full_name" value="{{if .Data.Target}}{{.Data.Target.FullName}}{{else}}{{.Data.Form.fullname}}{{end}}" required placeholder="Nama lengkap pengguna">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="email">Email <span class="required">*</span></label>
+                            <input type="email" id="email" name="email" value="{{if .Data.Target}}{{.Data.Target.Email}}{{else}}{{.Data.Form.email}}{{end}}" required placeholder="pengguna@klinik.com">
+                        </div>
+                        <div class="form-group">
+                            <label for="role_id">Role <span class="required">*</span></label>
+                            <select id="role_id" name="role_id" required {{if and .Data.Target (eq .Data.Target.Username "admin")}}disabled{{end}}>
+                                <option value="" disabled {{if not .Data.Target}}selected{{end}}>Pilih role...</option>
+                                {{range .Data.Roles}}
+                                <option value="{{.ID}}"
+                                    {{if $.Data.Target}}{{range $.Data.Target.Roles}}{{if eq .ID $.ID}}selected{{end}}{{end}}{{end}}
+                                >{{.Name}}</option>
+                                {{end}}
+                            </select>
+                            {{if and .Data.Target (eq .Data.Target.Username "admin")}}<span class="form-hint">Role admin utama tidak dapat diubah</span><input type="hidden" name="role_id" value="1">{{end}}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-section">
+                    <div class="form-section-title">
+                        <span class="section-icon" style="background:var(--success-light);color:var(--success-dark);">&#9919;</span>
+                        Keamanan & Status
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="password">Password {{if not .Data.Target}}<span class="required">*</span>{{end}}</label>
+                            <input type="password" id="password" name="password" placeholder="{{if .Data.Target}}Kosongkan jika tidak diganti{{else}}Minimal 6 karakter{{end}}" {{if not .Data.Target}}required{{end}} minlength="6">
+                            {{if .Data.Target}}<span class="form-hint">Isi hanya jika ingin reset password</span>{{end}}
+                        </div>
+                        {{if .Data.Target}}
+                        <div class="form-group">
+                            <label for="is_active">Status Akun</label>
+                            <select id="is_active" name="is_active">
+                                <option value="true" {{if .Data.Target.IsActive}}selected{{end}}>Aktif</option>
+                                <option value="false" {{if not .Data.Target.IsActive}}selected{{end}}>Nonaktif</option>
+                            </select>
+                        </div>
+                        {{end}}
+                    </div>
+                </div>
+
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary">&#10004; Simpan</button>
+                    <a href="/users" class="btn btn-outline">Batal</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{{end}}

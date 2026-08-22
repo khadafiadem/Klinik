@@ -1,0 +1,78 @@
+{{define "title"}}Pengguna{{end}}
+
+{{define "content"}}
+<div class="page-header">
+    <div class="page-header-left">
+        <h1>Manajemen Pengguna</h1>
+        <span class="page-subtitle">Kelola akun login dan role pengguna sistem</span>
+    </div>
+    <div class="page-actions">
+        <a href="/users/new" class="btn btn-primary">&#10010; Tambah Pengguna</a>
+    </div>
+</div>
+
+<div class="page-body">
+    <div class="search-box">
+        <div class="search-container">
+            <span class="search-icon">&#128269;</span>
+            <input type="text" id="searchInput" placeholder="Cari username, nama, atau email..." onkeyup="searchTable('searchInput', 'usersTable')">
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-body" style="padding:0;">
+            <div class="table-wrapper">
+                {{if .Data}}
+                <table id="usersTable">
+                    <thead>
+                        <tr>
+                            <th>Username</th>
+                            <th>Nama Lengkap</th>
+                            <th>Email</th>
+                            <th>Role</th>
+                            <th>Status</th>
+                            <th>Login Terakhir</th>
+                            <th>Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {{range .Data}}
+                        <tr>
+                            <td><span class="table-code">{{.Username}}</span></td>
+                            <td><span class="table-name">{{.FullName}}</span></td>
+                            <td>{{.Email}}</td>
+                            <td>{{range .Roles}}<span class="badge badge-role">{{.Name}}</span>{{end}}</td>
+                            <td>
+                                {{if .IsActive}}
+                                <span class="badge badge-active">Aktif</span>
+                                {{else}}
+                                <span class="badge badge-inactive">Nonaktif</span>
+                                {{end}}
+                            </td>
+                            <td>{{if .LastLogin}}{{.LastLogin.Format "02 Jan 2006 15:04"}}{{else}}Belum pernah{{end}}</td>
+                            <td>
+                                <div class="table-actions">
+                                    <a href="/users/{{.ID}}/edit" class="btn btn-sm btn-outline">Edit</a>
+                                    <form method="POST" action="/users/delete" onsubmit="return confirmDelete('{{.Username}}')">
+                                        <input type="hidden" name="id" value="{{.ID}}">
+                                        <button type="submit" class="btn btn-sm btn-danger">Hapus</button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                        {{end}}
+                    </tbody>
+                </table>
+                {{else}}
+                <div class="empty-state">
+                    <div class="empty-state-icon">&#128100;</div>
+                    <h3>Belum Ada Pengguna</h3>
+                    <p>Tambahkan pengguna pertama untuk memberikan akses ke sistem.</p>
+                    <a href="/users/new" class="btn btn-primary">&#10010; Tambah Pengguna</a>
+                </div>
+                {{end}}
+            </div>
+        </div>
+    </div>
+</div>
+{{end}}
