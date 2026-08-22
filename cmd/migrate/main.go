@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"strings"
+	"time"
 
 	"klinik-app/internal/auth"
 	"klinik-app/internal/config"
@@ -260,6 +261,7 @@ func seedDummyData(db *sql.DB) {
 	seedPrescriptions(db)
 	seedMedicines(db)
 	seedInvoices(db)
+	seedTodayTransactions(db)
 
 	fmt.Println()
 	fmt.Println("Data dummy berhasil dimasukkan!")
@@ -552,6 +554,238 @@ func seedInvoices(db *sql.DB) {
 		}
 	}
 	fmt.Printf("  %d tagihan ditambahkan\n", len(invoices))
+}
+
+func seedTodayTransactions(db *sql.DB) {
+	today := time.Now().Format("2006-01-02")
+
+	// Registrasi hari ini
+	type reg struct {
+		RegNum, PatientMRN, DoctorCode, RegType, Complaint, Status string
+	}
+	regs := []reg{
+		{"REG-" + today + "-101", "MR-000001", "D001", "UMUM", "Kontrol demam", "TERDAFTAR"},
+		{"REG-" + today + "-102", "MR-000002", "D002", "BPJS", "Vaksinasi anak", "SELESAI"},
+		{"REG-" + today + "-103", "MR-000003", "D005", "UMUM", "Telinga berdenging", "SEDANG_DIPERIKSA"},
+		{"REG-" + today + "-104", "MR-000004", "D004", "ASURANSI", "Gatal pada kulit", "TERDAFTAR"},
+		{"REG-" + today + "-105", "MR-000005", "D003", "KONTROL", "Kontrol luka pasca jahit", "TERDAFTAR"},
+	}
+	for _, r := range regs {
+		var pid, did int
+		_ = db.QueryRow("SELECT id FROM patients WHERE medical_record_number=$1", r.PatientMRN).Scan(&pid)
+		_ = db.QueryRow("SELECT id FROM doctors WHERE doctor_code=$1", r.DoctorCode).Scan(&did)
+		if pid == 0 || did == 0 {
+			continue
+		}
+		var exists int
+		_ = db.QueryRow("SELECT COUNT(*) FROM registrations WHERE registration_number=$1", r.RegNum).Scan(&exists)
+		if exists > 0 {
+			continue
+		}
+		_, _ = db.Exec(`INSERT INTO registrations (registration_number, patient_id, doctor_id, registration_date, registration_type, complaint, status)
+			VALUES ($1,$2,$3,$4,$5,$6,$7)`, r.RegNum, pid, did, today, r.RegType, r.Complaint, r.Status)
+	}
+
+	// Antrian hari ini
+	type q struct {
+		QueueNum, RegNum, PatientMRN, DoctorCode, Status string
+	}
+	queues := []q{
+		{"B-001", "REG-" + today + "-101", "MR-000001", "D001", "MENUNGGU"},
+		{"B-002", "REG-" + today + "-102", "MR-000002", "D002", "SELESAI"},
+		{"B-003", "REG-" + today + "-103", "MR-000003", "D005", "SEDANG_DIPERIKSA"},
+		{"B-004", "REG-" + today + "-104", "MR-000004", "D004", "MENUNGGU"},
+		{"B-005", "REG-" + today + "-105", "MR-000005", "D003", "MENUNGGU"},
+	}
+	for _, qq := range queues {
+		var regID, pid, did int
+		_ = db.QueryRow("SELECT id FROM registrations WHERE registration_number=$1", qq.RegNum).Scan(&regID)
+		_ = db.QueryRow("SELECT id FROM patients WHERE medical_record_number=$1", qq.PatientMRN).Scan(&pid)
+		_ = db.QueryRow("SELECT id FROM doctors WHERE doctor_code=$1", qq.DoctorCode).Scan(&did)
+		if regID == 0 || pid == 0 || did == 0 {
+			continue
+		}
+		var exists int
+		_ = db.QueryRow("SELECT COUNT(*) FROM queues WHERE queue_number=$1 AND queue_date=$2", qq.QueueNum, today).Scan(&exists)
+		if exists > 0 {
+			continue
+		}
+		_, _ = db.Exec(`INSERT INTO queues (queue_number, registration_id, patient_id, doctor_id, queue_date, status)
+			VALUES ($1,$2,$3,$4,$5,$6)`, qq.QueueNum, regID, pid, did, today, qq.Status)
+	}
+
+	// Rekam medis untuk pasien MR-000003 dan MR-000004
+	mrs := []struct {
+		MRNum, PatientMRN, DoctorCode, Complaint, Anamnesis, PhysExam, Status string
+	}{
+		{"RM-" + today + "-101", "MR-000003", "D005", "Telinga berdenging sejak 2 hari", "Pasien mengeluh telinga kanan berdenging setelah berenang", "Tympani sedang, kanal telinga bersih", "FINAL"},
+		{"RM-" + today + "-102", "MR-000004", "D004", "Gatal dan ruam pada lengan", "Ruam timbul setelah makan seafood, gatal menjalar", "Eritema papular di forearm bilateral", "DRAFT"},
+	}
+	for _, mr := range mrs {
+		var pid, did int
+		_ = db.QueryRow("SELECT id FROM patients WHERE medical_record_number=$1", mr.PatientMRN).Scan(&pid)
+		_ = db.QueryRow("SELECT id FROM doctors WHERE doctor_code=$1", mr.DoctorCode).Scan(&did)
+		if pid == 0 || did == 0 {
+			continue
+		}
+		var exists int
+		_ = db.QueryRow("SELECT COUNT(*) FROM medical_records WHERE medical_record_number=$1", mr.MRNum).Scan(&exists)
+		if exists > 0 {
+			continue
+		}
+		_, _ = db.Exec(`INSERT INTO medical_records (medical_record_number, patient_id, doctor_id, examination_date, chief_complaint, anamnesis, physical_examination, status)
+			VALUES ($1,$2,$3,$4,$5,$6,$7,$8)`, mr.MRNum, pid, did, today, mr.Complaint, mr.Anamnesis, mr.PhysExam, mr.Status)
+	}
+
+	// Resep hari ini
+	rxs := []struct {
+		RxNum, PatientMRN, DoctorCode, Status string
+		Items                                 []struct {
+			Name, Code, Dosage, Freq, Dur, Instr string
+			Qty                                  int
+		}
+	}{
+		{"RX-" + today + "-101", "MR-000003", "D005", "PENDING", []struct {
+			Name, Code, Dosage, Freq, Dur, Instr string
+			Qty                                  int
+		}{{
+			"Cetirizine 10mg", "OBT-004", "1 tablet", "1x malam", "7 hari", "Diminum sebelum tidur", 7,
+		}},
+		},
+		{"RX-" + today + "-102", "MR-000004", "D004", "PROCESSING", []struct {
+			Name, Code, Dosage, Freq, Dur, Instr string
+			Qty                                  int
+		}{{
+			"Miconazole Cream", "OBT-008", "Apply tipis", "2x sehari", "14 hari", "Oleskan pada area ruam", 1,
+		}, {
+			"Vitamin C 1000mg", "OBT-005", "1 tablet", "1x sehari", "7 hari", "Diminum setelah makan", 7,
+		}},
+		},
+		{"RX-" + today + "-103", "MR-000001", "D001", "COMPLETED", []struct {
+			Name, Code, Dosage, Freq, Dur, Instr string
+			Qty                                  int
+		}{{
+			"Parasetamol 500mg", "OBT-001", "1 tablet", "3x sehari", "3 hari", "Diminum bila demam", 9,
+		}},
+		},
+		{"RX-" + today + "-104", "MR-000002", "D002", "PENDING", []struct {
+			Name, Code, Dosage, Freq, Dur, Instr string
+			Qty                                  int
+		}{{
+			"Parasetamol Drop", "OBT-010", "0.6ml", "4x sehari", "3 hari", "Diberikan sesuai takaran", 1,
+		}, {
+			"ORS Sachet", "OBT-011", "1 sachet", "2x sehari", "2 hari", "Larutkan dalam 200ml air", 4,
+		}},
+		},
+	}
+	for _, rx := range rxs {
+		var pid, did int
+		_ = db.QueryRow("SELECT id FROM patients WHERE medical_record_number=$1", rx.PatientMRN).Scan(&pid)
+		_ = db.QueryRow("SELECT id FROM doctors WHERE doctor_code=$1", rx.DoctorCode).Scan(&did)
+		if pid == 0 || did == 0 {
+			continue
+		}
+		var mrID int
+		_ = db.QueryRow(`SELECT mr.id FROM medical_records mr WHERE mr.patient_id=$1 ORDER BY mr.examination_date DESC LIMIT 1`, pid).Scan(&mrID)
+		if mrID == 0 {
+			continue
+		}
+		var exists int
+		_ = db.QueryRow("SELECT COUNT(*) FROM prescriptions WHERE prescription_number=$1", rx.RxNum).Scan(&exists)
+		if exists > 0 {
+			continue
+		}
+		var rxID int
+		err := db.QueryRow(`INSERT INTO prescriptions (prescription_number, medical_record_id, patient_id, doctor_id, prescription_date, status)
+			VALUES ($1,$2,$3,$4,$5,$6) RETURNING id`, rx.RxNum, mrID, pid, did, today, rx.Status).Scan(&rxID)
+		if err != nil {
+			fmt.Printf("  [SKIP] Resep %s: %v\n", rx.RxNum, err)
+			continue
+		}
+		for _, item := range rx.Items {
+			_, _ = db.Exec(`INSERT INTO prescription_items (prescription_id, medicine_name, medicine_code, quantity, dosage, frequency, duration, instructions)
+				VALUES ($1,$2,$3,$4,$5,$6,$7,$8)`, rxID, item.Name, item.Code, item.Qty, item.Dosage, item.Freq, item.Dur, item.Instr)
+		}
+	}
+
+	// Invoice & pembayaran hari ini
+	type invItem struct {
+		Desc  string
+		Qty   int
+		Price float64
+		Type  string
+	}
+	invs := []struct {
+		InvNum, PatientMRN, Status, PayMethod string
+		PayAmount                             float64
+		items                                 []invItem
+	}{
+		{"INV-" + today + "-101", "MR-000001", "SUDAH_BAYAR", "CASH", -1, []invItem{
+			{"Biaya Konsultasi Umum", 1, 250000, "KONSULTASI"},
+			{"Parasetamol 500mg (9 tablet)", 1, 4500, "OBAT"},
+		}},
+		{"INV-" + today + "-102", "MR-000002", "SUDAH_BAYAR", "QRIS", -1, []invItem{
+			{"Biaya Konsultasi Anak", 1, 300000, "KONSULTASI"},
+			{"Parasetamol Drop", 1, 15000, "OBAT"},
+			{"ORS Sachet", 4, 1500, "OBAT"},
+		}},
+		{"INV-" + today + "-103", "MR-000003", "BELUM_BAYAR", "", 0, []invItem{
+			{"Biaya Konsultasi THT", 1, 250000, "KONSULTASI"},
+			{"Cetirizine 10mg (7 tablet)", 1, 2000, "OBAT"},
+		}},
+		{"INV-" + today + "-104", "MR-000004", "SEBAGIAN", "BANK_TRANSFER", 100000, []invItem{
+			{"Biaya Konsultasi Kulit", 1, 275000, "KONSULTASI"},
+			{"Miconazole Cream", 1, 12000, "OBAT"},
+			{"Vitamin C 1000mg (7 tablet)", 1, 10500, "OBAT"},
+		}},
+		{"INV-" + today + "-105", "MR-000005", "SUDAH_BAYAR", "DEBIT", -1, []invItem{
+			{"Biaya Konsultasi Bedah (kontrol)", 1, 350000, "KONSULTASI"},
+			{"Perawatan Luka", 1, 100000, "TINDAKAN"},
+		}},
+	}
+	addedInv := 0
+	for _, inv := range invs {
+		var pid int
+		_ = db.QueryRow("SELECT id FROM patients WHERE medical_record_number=$1", inv.PatientMRN).Scan(&pid)
+		if pid == 0 {
+			continue
+		}
+		var exists int
+		_ = db.QueryRow("SELECT COUNT(*) FROM invoices WHERE invoice_number=$1", inv.InvNum).Scan(&exists)
+		if exists > 0 {
+			continue
+		}
+
+		var subtotal float64
+		for _, item := range inv.items {
+			subtotal += float64(item.Qty) * item.Price
+		}
+		total := subtotal
+
+		var invID int
+		err := db.QueryRow(`INSERT INTO invoices (invoice_number, patient_id, invoice_date, subtotal, discount, total, status)
+			VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING id`, inv.InvNum, pid, today, subtotal, 0.0, total, inv.Status).Scan(&invID)
+		if err != nil {
+			fmt.Printf("  [SKIP] Invoice %s: %v\n", inv.InvNum, err)
+			continue
+		}
+		for _, item := range inv.items {
+			itemTotal := float64(item.Qty) * item.Price
+			_, _ = db.Exec(`INSERT INTO invoice_items (invoice_id, description, quantity, unit_price, total_price, item_type)
+				VALUES ($1,$2,$3,$4,$5,$6)`, invID, item.Desc, item.Qty, item.Price, itemTotal, item.Type)
+		}
+		if inv.PayAmount != 0 {
+			amount := inv.PayAmount
+			if amount < 0 {
+				amount = total
+			}
+			_, _ = db.Exec(`INSERT INTO payments (payment_number, invoice_id, patient_id, payment_date, amount, payment_method, status)
+				VALUES ($1,$2,$3,$4,$5,$6,'COMPLETED')`,
+				fmt.Sprintf("PAY-%s-%03d", strings.ReplaceAll(today, "-", ""), invID), invID, pid, today, amount, inv.PayMethod)
+		}
+		addedInv++
+	}
+	fmt.Printf("  Transaksi hari ini: %d registrasi, 5 antrian, 2 rekam medis, 4 resep, %d invoice ditambahkan\n", len(regs), addedInv)
 }
 
 func checkUserExists(db *sql.DB, username string) (bool, error) {
