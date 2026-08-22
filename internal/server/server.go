@@ -101,6 +101,7 @@ func (s *Server) registerWebRoutes(mux *http.ServeMux) {
 		all         = []string(nil)
 		admin       = []string{"ADMIN"}
 		doctor      = []string{"ADMIN", "DOCTOR"}
+		doctorNurse = []string{"ADMIN", "DOCTOR", "NURSE"}
 		nurse       = []string{"ADMIN", "NURSE"}
 		pharmacist  = []string{"ADMIN", "PHARMACIST"}
 		cashier     = []string{"ADMIN", "CASHIER"}
@@ -109,12 +110,13 @@ func (s *Server) registerWebRoutes(mux *http.ServeMux) {
 		regAcc      = []string{"ADMIN", "DOCTOR", "NURSE"}
 		medicalAcc  = []string{"ADMIN", "DOCTOR", "NURSE"}
 		rxView      = []string{"ADMIN", "DOCTOR", "PHARMACIST"}
+		medView     = []string{"ADMIN", "PHARMACIST", "DOCTOR"}
 	)
 
 	mux.HandleFunc("/dashboard", protected(all, s.wh.Dashboard))
 	mux.HandleFunc("/clinic-settings", protected(admin, s.wh.ClinicSettings))
 
-	mux.HandleFunc("/doctors", protected(admin, s.wh.DoctorsList))
+	mux.HandleFunc("/doctors", protected(doctorNurse, s.wh.DoctorsList))
 	mux.HandleFunc("/doctors/new", protected(doctor, s.wh.DoctorForm))
 	mux.HandleFunc("/doctors/save", protected(doctor, s.wh.DoctorSave))
 	mux.HandleFunc("/doctors/", protected(doctor, s.wh.DoctorForm))
@@ -156,12 +158,12 @@ func (s *Server) registerWebRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("/prescriptions/item/", protected(doctor, s.wh.PrescriptionRemoveItem))
 	mux.HandleFunc("/prescriptions/", protected(rxView, s.wh.PrescriptionView))
 
-	mux.HandleFunc("/medicines", protected(pharmacist, s.wh.MedicinesList))
+	mux.HandleFunc("/medicines", protected(medView, s.wh.MedicinesList))
 	mux.HandleFunc("/medicines/new", protected(pharmacist, s.wh.MedicineForm))
 	mux.HandleFunc("/medicines/save", protected(pharmacist, s.wh.MedicineSave))
 	mux.HandleFunc("/medicines/stock/add", protected(pharmacist, s.wh.MedicineStockAdd))
 	mux.HandleFunc("/medicines/stock/reduce", protected(pharmacist, s.wh.MedicineStockReduce))
-	mux.HandleFunc("/medicines/", protected(pharmacist, s.wh.MedicinePage))
+	mux.HandleFunc("/medicines/", protected(medView, s.wh.MedicinePage))
 
 	mux.HandleFunc("/invoices", protected(cashier, s.wh.InvoicesList))
 	mux.HandleFunc("/invoices/new", protected(cashier, s.wh.InvoiceForm))

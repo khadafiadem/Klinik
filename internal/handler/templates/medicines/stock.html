@@ -32,8 +32,7 @@
     </div>
 </div>
 
-<!-- Tambah Stok -->
-<div class="card" style="margin-bottom:24px;">
+{{if hasRole $.User "ADMIN" "PHARMACIST"}}<!-- Tambah Stok --><div class="card" style="margin-bottom:24px;">
     <div class="card-header">
         <h3 class="card-title">Tambah Stok Masuk</h3>
     </div>
@@ -56,6 +55,7 @@
         </form>
     </div>
 </div>
+
 
 <!-- Kurangi Stok -->
 <div class="card" style="margin-bottom:24px;">
@@ -81,6 +81,7 @@
         </form>
     </div>
 </div>
+{{end}}
 
 <!-- Riwayat Stok -->
 <div class="card">

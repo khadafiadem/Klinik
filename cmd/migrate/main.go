@@ -262,6 +262,7 @@ func seedDummyData(db *sql.DB) {
 	seedMedicines(db)
 	seedInvoices(db)
 	seedTodayTransactions(db)
+	seedUsers(db)
 
 	fmt.Println()
 	fmt.Println("Data dummy berhasil dimasukkan!")
@@ -786,6 +787,69 @@ func seedTodayTransactions(db *sql.DB) {
 		addedInv++
 	}
 	fmt.Printf("  Transaksi hari ini: %d registrasi, 5 antrian, 2 rekam medis, 4 resep, %d invoice ditambahkan\n", len(regs), addedInv)
+}
+
+func seedUsers(db *sql.DB) {
+	fmt.Println()
+	fmt.Println("Membuat akun login pengguna...")
+
+	type acc struct {
+		Username, FullName, Email, Role, Keterangan string
+	}
+	accounts := []acc{
+		{"d001", "dr. Ahmad Suharto, Sp.PD", "ahmad@klinik.com", "DOCTOR", "Dokter Penyakit Dalam"},
+		{"d002", "dr. Siti Nurhaliza, Sp.A", "siti@klinik.com", "DOCTOR", "Dokter Anak"},
+		{"d003", "dr. Budi Santoso, Sp.BED", "budi@klinik.com", "DOCTOR", "Dokter Bedah"},
+		{"d004", "dr. Dewi Lestari, Sp.KK", "dewi@klinik.com", "DOCTOR", "Dokter Kulit"},
+		{"d005", "dr. Eko Prasetyo, Sp.THT", "eko@klinik.com", "DOCTOR", "Dokter THT"},
+		{"rina", "Rina Wulandari", "rina@klinik.com", "NURSE", "Resepsionis"},
+		{"maya", "Maya Putri", "maya@klinik.com", "NURSE", "Perawat"},
+		{"lestari", "Lestari Budiman", "lestari@klinik.com", "NURSE", "Perawat"},
+		{"andi", "Andi Kurniawan", "andi@klinik.com", "ADMIN", "Admin"},
+		{"farhan", "Farhan Maulana", "farhan@klinik.com", "PHARMACIST", "Apoteker"},
+		{"kasir01", "Kasir Klinik", "kasir@klinik.com", "CASHIER", "Kasir"},
+	}
+
+	created := 0
+	for _, a := range accounts {
+		exists, err := checkUserExists(db, a.Username)
+		if err != nil {
+			fmt.Printf("  [SKIP] %s: %v\n", a.Username, err)
+			continue
+		}
+		if exists {
+			continue
+		}
+
+		var roleID int
+		if err := db.QueryRow("SELECT id FROM roles WHERE name=$1", a.Role).Scan(&roleID); err != nil {
+			fmt.Printf("  [SKIP] %s: role %s tidak ditemukan\n", a.Username, a.Role)
+			continue
+		}
+
+		password := a.Username + "123"
+		hash, err := auth.HashPassword(password)
+		if err != nil {
+			fmt.Printf("  [SKIP] %s: %v\n", a.Username, err)
+			continue
+		}
+
+		var userID int
+		err = db.QueryRow(`INSERT INTO users (username, email, password_hash, full_name)
+			VALUES ($1,$2,$3,$4) RETURNING id`, a.Username, a.Email, hash, a.FullName).Scan(&userID)
+		if err != nil {
+			fmt.Printf("  [SKIP] %s: %v\n", a.Username, err)
+			continue
+		}
+		_, _ = db.Exec(`INSERT INTO user_roles (user_id, role_id) VALUES ($1,$2)`, userID, roleID)
+		fmt.Printf("  %-8s (%s) password: %s\n", a.Username, a.Keterangan, password)
+		created++
+	}
+	if created == 0 {
+		fmt.Println("  Semua akun sudah ada.")
+	} else {
+		fmt.Printf("  %d akun dibuat.\n", created)
+	}
 }
 
 func checkUserExists(db *sql.DB, username string) (bool, error) {

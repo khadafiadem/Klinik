@@ -45,6 +45,19 @@ func RenderTemplate(w http.ResponseWriter, r *http.Request, tmplName string, dat
 		"now": func() string {
 			return time.Now().Format("2006-01-02")
 		},
+		"hasRole": func(u *auth.User, names ...string) bool {
+			if u == nil {
+				return false
+			}
+			for _, role := range u.Roles {
+				for _, n := range names {
+					if strings.EqualFold(role.Name, n) {
+						return true
+					}
+				}
+			}
+			return false
+		},
 	}
 
 	tmpl, err := template.New("").Funcs(funcMap).ParseFS(templatesFS, "templates/layouts/base.html", "templates/"+tmplName+".html")
