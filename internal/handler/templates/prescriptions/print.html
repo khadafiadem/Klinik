@@ -1,0 +1,127 @@
+{{define "print"}}
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Copy Resep - KlinikApp</title>
+<style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Segoe UI', Arial, sans-serif; color: #1a1a2e; background: #f0f2f5; padding: 24px; }
+    .sheet { max-width: 720px; margin: 0 auto; background: #fff; padding: 40px 48px; border-radius: 8px; box-shadow: 0 2px 12px rgba(0,0,0,.08); }
+    .rx-header { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 3px double #1a1a2e; padding-bottom: 16px; }
+    .clinic-name { font-size: 1.35rem; font-weight: 800; letter-spacing: .5px; }
+    .clinic-meta { font-size: .82rem; color: #555; margin-top: 4px; line-height: 1.5; }
+    .rx-title { text-align: center; font-size: 1.05rem; font-weight: 700; letter-spacing: 3px; margin: 18px 0 4px; }
+    .rx-number { text-align: center; font-size: .85rem; color: #666; margin-bottom: 20px; }
+    .info-grid { display: grid; grid-template-columns: 110px 1fr 110px 1fr; gap: 6px 10px; font-size: .88rem; margin-bottom: 20px; }
+    .info-grid .lbl { color: #555; }
+    .info-grid .val { font-weight: 600; }
+    .quantum { font-style: italic; font-size: .95rem; margin-bottom: 14px; }
+    table.rx-items { width: 100%; border-collapse: collapse; font-size: .88rem; }
+    table.rx-items th, table.rx-items td { border: 1px solid #999; padding: 7px 9px; vertical-align: top; }
+    table.rx-items th { background: #eef1f6; text-align: left; font-size: .78rem; text-transform: uppercase; letter-spacing: .5px; }
+    table.rx-items td.num { text-align: center; width: 34px; }
+    .sig-area { display: flex; justify-content: space-between; margin-top: 44px; page-break-inside: avoid; }
+    .sig-box { text-align: center; font-size: .88rem; width: 240px; }
+    .sig-space { height: 64px; }
+    .sig-name { font-weight: 700; text-decoration: underline; }
+    .sig-role { font-size: .78rem; color: #555; margin-top: 2px; }
+    .footer-note { margin-top: 28px; font-size: .72rem; color: #888; text-align: center; border-top: 1px solid #ddd; padding-top: 10px; }
+    .toolbar { max-width: 720px; margin: 0 auto 16px; text-align: right; }
+    .btn-print { background: #2563eb; color: #fff; border: none; padding: 10px 22px; border-radius: 6px; font-size: .95rem; cursor: pointer; font-weight: 600; }
+    .btn-print:hover { background: #1d4ed8; }
+    @media print {
+        body { background: #fff; padding: 0; }
+        .sheet { box-shadow: none; border-radius: 0; max-width: none; padding: 16mm; }
+        .toolbar { display: none; }
+        @page { size: A5 landscape; margin: 8mm; }
+    }
+</style>
+</head>
+<body>
+{{$rx := .Prescription}}{{$cl := .Clinic}}
+<div class="toolbar">
+    <button class="btn-print" onclick="window.print()">&#128424; Cetak Resep</button>
+</div>
+
+<div class="sheet">
+    <div class="rx-header">
+        <div>
+            <div class="clinic-name">{{$cl.ClinicName}}</div>
+            <div class="clinic-meta">
+                {{$cl.ClinicAddress}}<br>
+                Telp: {{$cl.ClinicPhone}}{{if $cl.ClinicEmail}} &middot; {{$cl.ClinicEmail}}{{end}}
+            </div>
+        </div>
+        <div style="text-align:right;">
+            <div style="font-size:2.2rem;font-weight:800;color:#2563eb;">&#8477;</div>
+            <div class="clinic-meta">Copy Resep<br>Tanggal cetak: {{now}}</div>
+        </div>
+    </div>
+
+    <div class="rx-title">RESEP</div>
+    <div class="rx-number">{{$rx.PrescriptionNumber}}</div>
+
+    <div class="info-grid">
+        <span class="lbl">Pasien</span><span class="val">{{$rx.PatientName}}</span>
+        <span class="lbl">No. RM</span><span class="val">{{$rx.PatientMRN}}</span>
+        <span class="lbl">Dokter</span><span class="val">{{$rx.DoctorName}}</span>
+        <span class="lbl">Tanggal Resep</span><span class="val">{{$rx.PrescriptionDate}}</span>
+    </div>
+
+    <div class="quantum">Quantum pro nato:</div>
+
+    <table class="rx-items">
+        <thead>
+            <tr>
+                <th>No</th>
+                <th>Nama Obat</th>
+                <th>Jumlah</th>
+                <th>Aturan Pakai</th>
+                <th>Keterangan</th>
+            </tr>
+        </thead>
+        <tbody>
+            {{$i := 0}}
+            {{range $rx.Items}}
+            <tr>
+                <td class="num">{{$i = add $i 1}}{{$i}}</td>
+                <td><strong>{{.MedicineName}}</strong>{{if .MedicineCode}}<br><small>{{.MedicineCode}}</small>{{end}}</td>
+                <td style="text-align:center;">{{.Quantity}}</td>
+                <td>S. {{.Dosage}} &mdash; {{.Frequency}}<br><small>Durasi: {{.Duration}}</small></td>
+                <td>{{.Instructions}}</td>
+            </tr>
+            {{end}}
+        </tbody>
+    </table>
+
+    {{if $rx.Notes}}
+    <p style="font-size:.85rem;margin-top:14px;"><strong>Catatan:</strong> {{$rx.Notes}}</p>
+    {{end}}
+
+    <div class="sig-area">
+        <div class="sig-box">
+            <div>Diberikan oleh Apoteker,</div>
+            <div class="sig-space"></div>
+            <div class="sig-name">{{.PrintedBy}}</div>
+            <div class="sig-role">Apotek / Farmasi</div>
+        </div>
+        <div class="sig-box">
+            <div>Mengetahui,</div>
+            <div class="sig-space"></div>
+            <div class="sig-name">{{$rx.DoctorName}}</div>
+            <div class="sig-role">Dokter</div>
+        </div>
+    </div>
+
+    <div class="footer-note">
+        Dokumen ini adalah copy resep untuk pasien &mdash; dicetak dari sistem KlinikApp.
+        Harap membawa dokumen ini saat mengambil obat di apotek.
+    </div>
+</div>
+
+<script>window.addEventListener('load', function(){ setTimeout(function(){ window.print(); }, 300); });</script>
+</body>
+</html>
+{{end}}

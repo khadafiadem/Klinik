@@ -25,7 +25,8 @@ func HasAnyRole(u *auth.User, roles ...string) bool {
 
 func (h *WebHandler) PrescriptionsList(w http.ResponseWriter, r *http.Request, user *auth.User) {
 	search := r.URL.Query().Get("search")
-	list, _, err := h.rxSvc.GetAll(1, 100, search)
+	status := r.URL.Query().Get("status")
+	list, _, err := h.rxSvc.GetAll(1, 100, search, status)
 	if err != nil {
 		logger.Error.Printf("Gagal memuat resep: %v", err)
 	}
@@ -33,6 +34,7 @@ func (h *WebHandler) PrescriptionsList(w http.ResponseWriter, r *http.Request, u
 		User:   user,
 		Data:   list,
 		Search: search,
+		Data2:  status,
 	})
 }
 
@@ -47,6 +49,10 @@ func (h *WebHandler) PrescriptionView(w http.ResponseWriter, r *http.Request, us
 	}
 
 	if len(parts) > 1 && parts[1] != "" {
+		if parts[1] == "print" {
+			h.PrescriptionPrint(w, r, id, user)
+			return
+		}
 		h.prescriptionAction(w, r, id, parts[1], user)
 		return
 	}
@@ -68,6 +74,26 @@ func (h *WebHandler) PrescriptionView(w http.ResponseWriter, r *http.Request, us
 			"Prescription": rx,
 			"Medicines":    medicinesList,
 		},
+	})
+}
+
+func (h *WebHandler) PrescriptionPrint(w http.ResponseWriter, r *http.Request, id int, user *auth.User) {
+	if !HasAnyRole(user, "ADMIN", "PHARMACIST", "DOCTOR") {
+		RenderForbidden(w, r, user)
+		return
+	}
+
+	rx, err := h.rxSvc.GetByID(id)
+	if err != nil {
+		http.Redirect(w, r, "/prescriptions", http.StatusSeeOther)
+		return
+	}
+
+	settings, _ := h.clinicSvc.Get()
+	RenderPrint(w, "prescriptions/print", map[string]interface{}{
+		"Prescription": rx,
+		"Clinic":       settings,
+		"PrintedBy":    user.FullName,
 	})
 }
 

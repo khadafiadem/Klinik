@@ -3,6 +3,7 @@ package prescriptions
 import (
 	"database/sql"
 	"fmt"
+	"strings"
 	"time"
 )
 
@@ -14,14 +15,23 @@ func NewRepository(db *sql.DB) *Repository {
 	return &Repository{db: db}
 }
 
-func (r *Repository) GetAll(page, limit int, search string) ([]Prescription, int, error) {
+func (r *Repository) GetAll(page, limit int, search, status string) ([]Prescription, int, error) {
 	offset := (page - 1) * limit
 	args := []interface{}{}
-	where := ""
+	conds := []string{}
 
 	if search != "" {
-		where = `WHERE (pr.prescription_number ILIKE $1 OR p.full_name ILIKE $1 OR pr.medicine_name ILIKE $1)`
 		args = append(args, "%"+search+"%")
+		conds = append(conds, `(pr.prescription_number ILIKE $1 OR p.full_name ILIKE $1 OR pr.medicine_name ILIKE $1)`)
+	}
+	if status != "" {
+		args = append(args, status)
+		conds = append(conds, fmt.Sprintf(`pr.status = $%d`, len(args)))
+	}
+
+	where := ""
+	if len(conds) > 0 {
+		where = "WHERE " + strings.Join(conds, " AND ")
 	}
 
 	countQuery := fmt.Sprintf(`SELECT COUNT(*) FROM prescriptions pr

@@ -8,6 +8,7 @@
         <p class="page-subtitle">{{$rx.PatientName}} - {{$rx.PrescriptionDate}}</p>
     </div>
     <div style="display:flex;gap:8px;">
+        <a href="/prescriptions/{{$rx.ID}}/print" target="_blank" class="btn btn-secondary">Cetak Resep</a>
         {{if eq $rx.Status "PENDING"}}
         <a href="/prescriptions/{{$rx.ID}}/process" class="btn btn-warning">Proses</a>
         {{end}}
@@ -85,7 +86,7 @@
                         <td>{{.Instructions}}</td>
                         {{if eq $rx.Status "PENDING"}}
                         <td>
-                            <form method="POST" action="/prescriptions/item/{{$.PrescriptionID}}/{{.ID}}" style="display:inline;" onsubmit="return confirm('Hapus obat ini?')">
+                            <form method="POST" action="/prescriptions/item/{{$rx.ID}}/{{.ID}}" style="display:inline;" onsubmit="return confirm('Hapus obat ini?')">
                                 <button type="submit" class="btn btn-danger btn-sm">Hapus</button>
                             </form>
                         </td>
@@ -106,15 +107,15 @@
                 <input type="hidden" name="prescription_id" value="{{$rx.ID}}">
                 <div class="form-row">
                     <div class="form-group" style="flex:2;">
-                        <label class="form-label">Obat <span class="text-danger">*</span></label>
-                        <select name="medicine_id" class="form-select" id="medicineSelect" required onchange="
+                        <label class="form-label">Cari Obat <span class="text-danger">*</span></label>
+                        <input type="text" id="medicineSearch" class="form-input" placeholder="Ketik nama / kode obat untuk mencari..." onkeyup="filterMedicines()" autocomplete="off">
+                        <select name="medicine_id" class="form-select" id="medicineSelect" required size="8" onchange="
                             var opt=this.options[this.selectedIndex];
                             var info=document.getElementById('stockInfo');
                             if(opt.value){info.textContent='Stok tersedia: '+opt.dataset.stock;info.className=opt.dataset.stock>0?'text-muted':'text-danger';}
-                            else{info.textContent='';}">
-                            <option value="">-- Pilih Obat --</option>
+                            else{info.textContent='';}" style="margin-top:8px;">
                             {{range (index .Data "Medicines")}}
-                            <option value="{{.ID}}" data-stock="{{.Stock}}">{{.Name}} ({{.MedicineCode}}) - stok: {{.Stock}}</option>
+                            <option value="{{.ID}}" data-stock="{{.Stock}}" data-text="{{.Name}} {{.MedicineCode}} {{if .GenericName}}{{.GenericName}}{{end}}">{{.Name}} ({{.MedicineCode}}){{if .GenericName}} - {{.GenericName}}{{end}} | stok: {{.Stock}}</option>
                             {{end}}
                         </select>
                         <small id="stockInfo" class="text-muted"></small>
@@ -133,6 +134,31 @@
                 <button type="submit" class="btn btn-primary" style="margin-top:12px;">Tambah Obat</button>
             </form>
         </div>
+        <script>
+        function filterMedicines() {
+            var q = document.getElementById('medicineSearch').value.toLowerCase();
+            var sel = document.getElementById('medicineSelect');
+            var opts = sel.options;
+            var first = -1;
+            for (var i = 0; i < opts.length; i++) {
+                if (!opts[i].value) { continue; }
+                var match = opts[i].dataset.text.toLowerCase().indexOf(q) !== -1;
+                opts[i].style.display = match ? '' : 'none';
+                if (match && first === -1) { first = i; }
+            }
+            for (var i = 0; i < opts.length; i++) {
+                if (opts[i].style.display !== 'none' && opts[i].value) { sel.selectedIndex = i; break; }
+            }
+            if (sel.selectedIndex >= 0) {
+                var opt = sel.options[sel.selectedIndex];
+                var info = document.getElementById('stockInfo');
+                if (opt.value && opt.style.display !== 'none') {
+                    info.textContent = 'Stok tersedia: ' + opt.dataset.stock;
+                    info.className = opt.dataset.stock > 0 ? 'text-muted' : 'text-danger';
+                }
+            }
+        }
+        </script>
         {{end}}
     </div>
 </div>

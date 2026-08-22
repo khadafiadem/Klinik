@@ -14,14 +14,14 @@ func NewService(db *sql.DB) *Service {
 	return &Service{repo: NewRepository(db)}
 }
 
-func (s *Service) GetAll(page, limit int, search string) ([]Prescription, int, error) {
+func (s *Service) GetAll(page, limit int, search, status string) ([]Prescription, int, error) {
 	if page < 1 {
 		page = 1
 	}
 	if limit < 1 || limit > 100 {
 		limit = 20
 	}
-	return s.repo.GetAll(page, limit, search)
+	return s.repo.GetAll(page, limit, search, status)
 }
 
 func (s *Service) GetByID(id int) (*Prescription, error) {

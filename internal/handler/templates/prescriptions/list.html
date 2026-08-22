@@ -8,7 +8,17 @@
     </div>
 </div>
 
-<div class="card">
+<div class="page-body">
+    <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;">
+        {{$st := .Data2}}
+        <a href="/prescriptions" class="btn {{if not $st}}btn-primary{{else}}btn-outline{{end}} btn-sm">Semua</a>
+        <a href="/prescriptions?status=PENDING" class="btn {{if eq $st "PENDING"}}btn-primary{{else}}btn-outline{{end}} btn-sm">Menunggu (Baru)</a>
+        <a href="/prescriptions?status=PROCESSING" class="btn {{if eq $st "PROCESSING"}}btn-primary{{else}}btn-outline{{end}} btn-sm">Disiapkan</a>
+        <a href="/prescriptions?status=COMPLETED" class="btn {{if eq $st "COMPLETED"}}btn-primary{{else}}btn-outline{{end}} btn-sm">Selesai</a>
+        <a href="/prescriptions?status=CANCELLED" class="btn {{if eq $st "CANCELLED"}}btn-primary{{else}}btn-outline{{end}} btn-sm">Batal</a>
+    </div>
+
+    <div class="card">
     <div class="card-header">
         <h3 class="card-title">Daftar Resep</h3>
         <div class="card-actions">

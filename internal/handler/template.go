@@ -19,6 +19,7 @@ type TemplateData struct {
 	User       *auth.User
 	ActivePage string
 	Data       interface{}
+	Data2      interface{}
 	Error      string
 	Success    string
 	Search     string
@@ -70,6 +71,27 @@ func RenderTemplate(w http.ResponseWriter, r *http.Request, tmplName string, dat
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	if err := tmpl.ExecuteTemplate(w, "base", data); err != nil {
 		logger.Error.Printf("Gagal render template %s: %v", tmplName, err)
+	}
+}
+
+func RenderPrint(w http.ResponseWriter, tmplName string, data interface{}) {
+	funcs := template.FuncMap{
+		"now": func() string {
+			return time.Now().Format("02 January 2006")
+		},
+		"add": func(a, b int) int {
+			return a + b
+		},
+	}
+	tmpl, err := template.New("").Funcs(funcs).ParseFS(templatesFS, "templates/"+tmplName+".html")
+	if err != nil {
+		logger.Error.Printf("Gagal parse template cetak %s: %v", tmplName, err)
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	if err := tmpl.ExecuteTemplate(w, "print", data); err != nil {
+		logger.Error.Printf("Gagal render template cetak %s: %v", tmplName, err)
 	}
 }
 
