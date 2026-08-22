@@ -1,10 +1,10 @@
 package handler
 
 import (
+	"embed"
 	"fmt"
 	"html/template"
 	"net/http"
-	"path/filepath"
 	"strings"
 	"time"
 
@@ -12,7 +12,8 @@ import (
 	"klinik-app/internal/logger"
 )
 
-var templatesDir = "web/templates"
+//go:embed templates
+var templatesFS embed.FS
 
 type TemplateData struct {
 	User       *auth.User
@@ -27,9 +28,6 @@ func RenderTemplate(w http.ResponseWriter, r *http.Request, tmplName string, dat
 	if data.ActivePage == "" {
 		data.ActivePage = extractPageName(r.URL.Path)
 	}
-
-	layoutPath := filepath.Join(templatesDir, "layouts", "base.html")
-	tmplPath := filepath.Join(templatesDir, tmplName+".html")
 
 	funcMap := template.FuncMap{
 		"upper": strings.ToUpper,
@@ -49,7 +47,7 @@ func RenderTemplate(w http.ResponseWriter, r *http.Request, tmplName string, dat
 		},
 	}
 
-	tmpl, err := template.New("").Funcs(funcMap).ParseFiles(layoutPath, tmplPath)
+	tmpl, err := template.New("").Funcs(funcMap).ParseFS(templatesFS, "templates/layouts/base.html", "templates/"+tmplName+".html")
 	if err != nil {
 		logger.Error.Printf("Gagal parse template %s: %v", tmplName, err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
