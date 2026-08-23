@@ -1,6 +1,13 @@
 # Environment
 .env
 
+# Backup database & kredensial backup
+backups/
+scripts/.backup-env
+
+# Tools lokal (pg_dump portable, tidak di-commit)
+tools/
+
 # Go
 *.exe
 *.exe~
@@ -35,3 +42,6 @@ dist/
 # Node (existing Next.js)
 node_modules/
 .next/
+
+.vercel
+.env*
