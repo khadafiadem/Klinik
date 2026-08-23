@@ -6,8 +6,18 @@ import (
 	"strings"
 
 	"klinik-app/internal/auth"
+	"klinik-app/internal/bpjs"
 	"klinik-app/internal/queues"
 )
+
+// syncBPJS menjalankan sinkronisasi BPJS secara asinkron (best-effort).
+// Kegagalan tidak memengaruhi operasional klinik dan tercatat di bpjs_log.
+func (h *WebHandler) syncBPJS(fn func(s *bpjs.Service)) {
+	go func() {
+		defer func() { _ = recover() }()
+		fn(h.bpjsSvc)
+	}()
+}
 
 func (h *WebHandler) QueuesPage(w http.ResponseWriter, r *http.Request, user *auth.User) {
 	date := r.URL.Query().Get("date")
@@ -42,21 +52,36 @@ func (h *WebHandler) QueueAction(w http.ResponseWriter, r *http.Request, user *a
 
 	action := parts[1]
 	var status string
+	var bpjsStatus int
+	var cancelReason string
 	switch action {
 	case "call":
-		status = "DIPANGGIL"
+		status, bpjsStatus = "DIPANGGIL", 1
 	case "start":
-		status = "SEDANG_DIPERIKSA"
+		status, bpjsStatus = "SEDANG_DIPERIKSA", 2
 	case "complete":
-		status = "SELESAI"
+		status, bpjsStatus = "SELESAI", 3
 	case "cancel":
 		status = "DIBATALKAN"
+		cancelReason = strings.TrimSpace(r.FormValue("alasan"))
+		if cancelReason == "" {
+			cancelReason = "Dibatalkan oleh petugas"
+		}
 	default:
 		http.Redirect(w, r, "/queues", http.StatusSeeOther)
 		return
 	}
 
 	h.queueSvc.UpdateStatus(id, status)
+
+	switch {
+	case bpjsStatus > 0:
+		s := bpjsStatus
+		h.syncBPJS(func(svc *bpjs.Service) { svc.OnQueueStatusChanged(id, s) })
+	case action == "cancel":
+		h.syncBPJS(func(svc *bpjs.Service) { svc.OnQueueCancelled(id, cancelReason) })
+	}
+
 	http.Redirect(w, r, "/queues", http.StatusSeeOther)
 }
 
@@ -75,5 +100,6 @@ func (h *WebHandler) QueueAdd(w http.ResponseWriter, r *http.Request, user *auth
 		http.Redirect(w, r, "/queues", http.StatusSeeOther)
 		return
 	}
+	h.syncBPJS(func(svc *bpjs.Service) { svc.OnQueueCreated(q.ID) })
 	http.Redirect(w, r, "/queues", http.StatusSeeOther)
 }

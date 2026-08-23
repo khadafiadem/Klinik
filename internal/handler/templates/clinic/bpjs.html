@@ -1,0 +1,173 @@
+{{define "title"}}Integrasi BPJS Kesehatan{{end}}
+
+{{define "content"}}
+<div class="page-header">
+    <div class="page-header-left">
+        <h1>Integrasi BPJS Kesehatan</h1>
+        <span class="page-subtitle">Antrean Online Mobile JKN (FKTP)</span>
+    </div>
+</div>
+
+<div class="page-body">
+    {{if .Success}}
+    <div class="alert alert-success">&#10004; {{.Success}}</div>
+    {{end}}
+
+    {{if .Error}}
+    <div class="alert alert-error">{{.Error}}</div>
+    {{end}}
+
+    <div class="card">
+        <div class="card-body">
+            <form method="POST" action="/settings/bpjs">
+                <div class="form-section">
+                    <div class="form-section-title">
+                        <span class="section-icon" style="background:var(--primary-100);color:var(--primary-dark);">&#9881;</span>
+                        Konfigurasi Web Service
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="enabled">Status Integrasi</label>
+                            <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
+                                <input type="checkbox" id="enabled" name="enabled" {{if .Data.Config.Enabled}}checked{{end}}>
+                                Aktifkan sinkronisasi antrean ke BPJS
+                            </label>
+                        </div>
+                        <div class="form-group">
+                            <label for="mode">Mode</label>
+                            <select id="mode" name="mode">
+                                <option value="SANDBOX" {{if eq .Data.Config.Mode "SANDBOX"}}selected{{end}}>SANDBOX (pengujian, tanpa koneksi)</option>
+                                <option value="PRODUCTION" {{if eq .Data.Config.Mode "PRODUCTION"}}selected{{end}}>PRODUCTION (server asli BPJS)</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="cons_id">Consumer ID (cons_id)</label>
+                            <input type="text" id="cons_id" name="cons_id" value="{{.Data.Config.ConsID}}" placeholder="Diterima dari BPJS">
+                        </div>
+                        <div class="form-group">
+                            <label for="secret_key">Secret Key</label>
+                            <input type="password" id="secret_key" name="secret_key" value="{{.Data.Config.SecretKey}}" placeholder="Diterima dari BPJS">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="user_key">User Key</label>
+                            <input type="password" id="user_key" name="user_key" value="{{.Data.Config.UserKey}}" placeholder="Diterima dari BPJS">
+                        </div>
+                        <div class="form-group">
+                            <label for="base_url">Base URL</label>
+                            <input type="text" id="base_url" name="base_url" value="{{.Data.Config.BaseURL}}" placeholder="https://apijkn-dev.bpjs-kesehatan.go.id/antreanfktp_dev">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-section">
+                    <div class="form-section-title">
+                        <span class="section-icon" style="background:var(--success-light);color:var(--success-dark);">&#9873;</span>
+                        Identitas Fasilitas &amp; Poli
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="kode_ppk">Kode PPK</label>
+                            <input type="text" id="kode_ppk" name="kode_ppk" value="{{.Data.Config.KodePPK}}" placeholder="Kode faskes dari BPJS">
+                        </div>
+                        <div class="form-group">
+                            <label for="nama_ppk">Nama PPK</label>
+                            <input type="text" id="nama_ppk" name="nama_ppk" value="{{.Data.Config.NamaPPK}}" placeholder="Nama fasilitas kesehatan">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="kode_poli">Kode Poli</label>
+                            <input type="text" id="kode_poli" name="kode_poli" value="{{.Data.Config.KodePoli}}" placeholder="Misal: 001 (Umum)">
+                        </div>
+                        <div class="form-group">
+                            <label for="nama_poli">Nama Poli</label>
+                            <input type="text" id="nama_poli" name="nama_poli" value="{{.Data.Config.NamaPoli}}" placeholder="Umum">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="jam_praktek">Jam Praktek</label>
+                            <input type="text" id="jam_praktek" name="jam_praktek" value="{{.Data.Config.JamPraktek}}" placeholder="08:00-16:00">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary">&#10004; Simpan Konfigurasi</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-body">
+            <h2 style="margin-top:0;">Mapping Kode Dokter BPJS</h2>
+            <p class="page-subtitle">Isi kode dokter BPJS untuk dokter yang melayani peserta JKN.</p>
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Dokter</th>
+                        <th>Kode Dokter BPJS</th>
+                        <th style="width:120px;"></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {{$cfg := .Data.Config}}
+                    {{range .Data.DoctorMaps}}
+                    <tr>
+                        <form method="POST" action="/settings/bpjs/doctors">
+                        <td>{{.DoctorName}}</td>
+                        <td><input type="hidden" name="doctor_id" value="{{.DoctorID}}">
+                            <input type="text" name="bpjs_code" value="{{.BPJSCode}}" placeholder="Belum dimapping"></td>
+                        <td><button type="submit" class="btn btn-sm btn-secondary">Simpan</button></td>
+                        </form>
+                    </tr>
+                    {{end}}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-body">
+            <h2 style="margin-top:0;">Log Sinkronisasi Terakhir</h2>
+            {{if .Data.Logs}}
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Waktu</th>
+                        <th>Aksi</th>
+                        <th>Antrean</th>
+                        <th>Kode</th>
+                        <th>Pesan</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {{range .Data.Logs}}
+                    <tr>
+                        <td>{{.CreatedAt.Format "02-01-2006 15:04:05"}}</td>
+                        <td>{{.Action}}</td>
+                        <td>{{if .QueueID}}#{{.QueueID}}{{else}}-{{end}}</td>
+                        <td>{{if .ResponseCode}}{{.ResponseCode}}{{else}}-{{end}}</td>
+                        <td>{{if .Message}}{{.Message}}{{else}}-{{end}}</td>
+                        <td>
+                            {{if .Success}}<span style="color:var(--success-dark);">Sukses</span>
+                            {{else}}<span style="color:var(--danger-dark);">Gagal</span>{{end}}
+                            {{if .Sandbox}}<em>(sandbox)</em>{{end}}
+                        </td>
+                    </tr>
+                    {{end}}
+                </tbody>
+            </table>
+            {{else}}
+            <p>Belum ada aktivitas sinkronisasi.</p>
+            {{end}}
+        </div>
+    </div>
+</div>
+{{end}}

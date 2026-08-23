@@ -1,0 +1,22 @@
+{
+  "simple": {
+    "input": "hello world",
+    "compressed": "BYUwNmD2AEDukCcwBMg"
+  },
+  "json": {
+    "input": "{\"metadata\":{\"code\":200,\"message\":\"OK\"},\"nomorkartu\":\"0001234567890\",\"nik\":\"3201234567890001\",\"tanggalperiksa\":\"2026-08-23\",\"kodepoli\":\"001\",\"namapoli\":\"Umum\"}",
+    "compressed": "N4IgtgpgLghgJjWIBcoDGB7OEUCYAM+ANOBAM5kwDmOyIA8gNIgC+JAdhmBgE4DWMHlACuKEIXwBGXAGYALAFYAbAHYAHAE58IDgEs+YmQWnzl6rYUk6QsdlSowANgAcIPfZTEFcSgLT41X1lrPiwIZwxHXTFLa3YYMBgIqLEAVTBhMFYgA"
+  },
+  "indonesian": {
+    "input": "Pasien: Andi Saputra, keluhan demam & batuk — poli umum (A-12)",
+    "compressed": "AoQwzglgpgdgXAAgIIwCYQQZRABwK4AuATiADQIDWUANngBYgwKpQC2IrCAZAgEYgE8FBIBQCBDgD21DHlayEACiQBaAIwAmAJRA"
+  },
+  "unicode": {
+    "input": "Klinik Séhat ± Dr. Ñoño 中文 ✓",
+    "compressed": "NIGwlgdmDWAEDKBLgFgQwC6wI2wCICcA6WARYHsBHs2QWjlBw01kGRyIA"
+  },
+  "empty": {
+    "input": "",
+    "compressed": ""
+  }
+}

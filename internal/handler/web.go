@@ -7,6 +7,7 @@ import (
 
 	"klinik-app/internal/audit"
 	"klinik-app/internal/auth"
+	"klinik-app/internal/bpjs"
 	"klinik-app/internal/clinic"
 	"klinik-app/internal/doctors"
 	"klinik-app/internal/finance"
@@ -37,6 +38,7 @@ type WebHandler struct {
 	rptSvc      *reports.Service
 	auditSvc    *audit.Service
 	userSvc     *users.Service
+	bpjsSvc     *bpjs.Service
 	rl          *middleware.RateLimiter
 }
 
@@ -56,6 +58,7 @@ func NewWebHandler(db *sql.DB, authService *auth.Service, rl *middleware.RateLim
 		rptSvc:      reports.NewService(db),
 		auditSvc:    audit.NewService(db),
 		userSvc:     users.NewService(db),
+		bpjsSvc:     bpjs.NewService(db),
 		rl:          rl,
 	}
 }
