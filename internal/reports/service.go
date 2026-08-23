@@ -157,3 +157,129 @@ func (s *Service) GetLowStockMedicines() ([]LowStockMedicine, error) {
 	}
 	return list, nil
 }
+
+type PatientRow struct {
+	MRN       string
+	FullName  string
+	Gender    string
+	BirthDate string
+	Phone     string
+	Insurance string
+	CreatedAt string
+}
+
+func (s *Service) GetPatientRows(from, to string) ([]PatientRow, error) {
+	rows, err := s.db.Query(`SELECT p.medical_record_number, p.full_name,
+		CASE p.gender WHEN 'LAKI_LAKI' THEN 'Laki-laki' ELSE 'Perempuan' END,
+		COALESCE(p.date_of_birth::text,''), COALESCE(p.phone,''),
+		COALESCE(p.insurance_name,''), to_char(p.created_at,'YYYY-MM-DD HH24:MI')
+		FROM patients p
+		WHERE p.created_at::date BETWEEN $1 AND $2
+		ORDER BY p.created_at DESC`, from, to)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var list []PatientRow
+	for rows.Next() {
+		var r PatientRow
+		if err := rows.Scan(&r.MRN, &r.FullName, &r.Gender, &r.BirthDate, &r.Phone, &r.Insurance, &r.CreatedAt); err != nil {
+			return nil, err
+		}
+		list = append(list, r)
+	}
+	return list, nil
+}
+
+type VisitRow struct {
+	RegNumber  string
+	RegDate    string
+	PatientMRN string
+	Patient    string
+	Doctor     string
+	RegType    string
+	Status     string
+}
+
+func (s *Service) GetVisitRows(from, to string) ([]VisitRow, error) {
+	rows, err := s.db.Query(`SELECT g.registration_number, g.registration_date::text,
+		p.medical_record_number, p.full_name, d.full_name,
+		CASE g.registration_type WHEN 'BARU' THEN 'Pasien Baru' WHEN 'LAMA' THEN 'Pasien Lama' ELSE g.registration_type END,
+		CASE g.status WHEN 'WAITING' THEN 'Menunggu' WHEN 'CALLED' THEN 'Dipanggil'
+			WHEN 'IN_EXAMINATION' THEN 'Sedang Diperiksa' WHEN 'COMPLETED' THEN 'Selesai'
+			WHEN 'CANCELLED' THEN 'Batal' ELSE g.status END
+		FROM registrations g
+		JOIN patients p ON g.patient_id = p.id
+		JOIN doctors d ON g.doctor_id = d.id
+		WHERE g.registration_date BETWEEN $1 AND $2
+		ORDER BY g.registration_date DESC, g.id DESC`, from, to)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var list []VisitRow
+	for rows.Next() {
+		var r VisitRow
+		if err := rows.Scan(&r.RegNumber, &r.RegDate, &r.PatientMRN, &r.Patient, &r.Doctor, &r.RegType, &r.Status); err != nil {
+			return nil, err
+		}
+		list = append(list, r)
+	}
+	return list, nil
+}
+
+type RevenueRow struct {
+	PaymentNumber string
+	PaymentDate   string
+	InvoiceNumber string
+	Patient       string
+	Method        string
+	Status        string
+	Amount        float64
+}
+
+type RevenueDetail struct {
+	Rows   []RevenueRow
+	Count  int
+	Total  float64
+}
+
+func (s *Service) GetRevenueDetail(from, to string) (*RevenueDetail, error) {
+	rd := &RevenueDetail{}
+
+	err := s.db.QueryRow(`SELECT COUNT(*), COALESCE(SUM(amount),0)
+		FROM payments WHERE payment_date BETWEEN $1 AND $2 AND status='COMPLETED'`,
+		from, to).Scan(&rd.Count, &rd.Total)
+	if err != nil {
+		return nil, err
+	}
+
+	rows, err := s.db.Query(`SELECT pay.payment_number, pay.payment_date::text,
+		COALESCE(inv.invoice_number,''), p.full_name,
+		CASE pay.payment_method WHEN 'CASH' THEN 'Tunai' WHEN 'BANK_TRANSFER' THEN 'Transfer Bank'
+			WHEN 'QRIS' THEN 'QRIS' WHEN 'DEBIT' THEN 'Kartu Debit' WHEN 'CREDIT_CARD' THEN 'Kartu Kredit'
+			WHEN 'BPJS' THEN 'BPJS' ELSE 'Lainnya' END,
+		CASE pay.status WHEN 'PENDING' THEN 'Menunggu' WHEN 'COMPLETED' THEN 'Selesai'
+			WHEN 'CANCELLED' THEN 'Batal' ELSE pay.status END,
+		pay.amount
+		FROM payments pay
+		JOIN patients p ON pay.patient_id = p.id
+		LEFT JOIN invoices inv ON pay.invoice_id = inv.id
+		WHERE pay.payment_date BETWEEN $1 AND $2
+		ORDER BY pay.payment_date DESC, pay.id DESC`, from, to)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var r RevenueRow
+		if err := rows.Scan(&r.PaymentNumber, &r.PaymentDate, &r.InvoiceNumber, &r.Patient, &r.Method, &r.Status, &r.Amount); err != nil {
+			return nil, err
+		}
+		rd.Rows = append(rd.Rows, r)
+	}
+	return rd, nil
+}

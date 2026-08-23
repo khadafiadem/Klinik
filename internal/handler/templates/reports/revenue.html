@@ -1,12 +1,11 @@
 {{define "title"}}Laporan Pendapatan{{end}}
 
 {{define "content"}}
-{{$rev := (index .Data "Revenue")}}
-{{$pay := (index .Data "Payments")}}
+{{$d := .Data}}{{$rev := $d.Revenue}}{{$pay := $d.Payments}}
 <div class="page-header">
     <div>
         <h1 class="page-title">Laporan Pendapatan</h1>
-        <p class="page-subtitle">Ringkasan keuangan klinik</p>
+        <p class="page-subtitle">Ringkasan dan rincian keuangan klinik</p>
     </div>
     <a href="/reports" class="btn btn-secondary">Kembali</a>
 </div>
@@ -77,6 +76,73 @@
                 </div>
             </div>
         </div>
+    </div>
+</div>
+
+<!-- Revenue Detail -->
+<div class="card" style="margin-top:24px;">
+    <div class="card-header">
+        <h3 class="card-title">Rincian Pembayaran</h3>
+        <div class="card-actions" style="display:flex;gap:8px;flex-wrap:wrap;">
+            <form method="GET" action="/reports/revenue" style="display:flex;gap:8px;align-items:center;">
+                <label style="font-size:.85rem;">Dari</label>
+                <input type="date" name="from" class="form-input" value="{{$d.From}}" style="max-width:160px;">
+                <label style="font-size:.85rem;">Sampai</label>
+                <input type="date" name="to" class="form-input" value="{{$d.To}}" style="max-width:160px;">
+                <button type="submit" class="btn btn-primary btn-sm">Tampilkan</button>
+            </form>
+            <a href="/reports/export/revenue?from={{$d.From}}&to={{$d.To}}" class="btn btn-success btn-sm">Export CSV</a>
+        </div>
+    </div>
+    <div class="card-body">
+        {{if $d.Detail}}
+        <p class="text-muted" style="margin-bottom:12px;">
+            {{$d.Detail.Count}} pembayaran selesai pada periode {{$d.From}} s/d {{$d.To}} &mdash;
+            total <strong>Rp {{printf "%.2f" $d.Detail.Total}}</strong>
+        </p>
+        {{if $d.Detail.Rows}}
+        <div class="table-responsive">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>No. Bayar</th>
+                        <th>Tanggal</th>
+                        <th>No. Invoice</th>
+                        <th>Pasien</th>
+                        <th>Metode</th>
+                        <th>Status</th>
+                        <th style="text-align:right;">Jumlah (Rp)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {{range $d.Detail.Rows}}
+                    <tr>
+                        <td><span class="badge badge-info">{{.PaymentNumber}}</span></td>
+                        <td>{{.PaymentDate}}</td>
+                        <td>{{.InvoiceNumber}}</td>
+                        <td>{{.Patient}}</td>
+                        <td>{{.Method}}</td>
+                        <td>
+                            {{if eq .Status "Selesai"}}
+                            <span class="badge badge-success">{{.Status}}</span>
+                            {{else if eq .Status "Batal"}}
+                            <span class="badge badge-danger">{{.Status}}</span>
+                            {{else}}
+                            <span class="badge badge-secondary">{{.Status}}</span>
+                            {{end}}
+                        </td>
+                        <td style="text-align:right;font-family:monospace;">{{printf "%.2f" .Amount}}</td>
+                    </tr>
+                    {{end}}
+                </tbody>
+            </table>
+        </div>
+        {{else}}
+        <p class="text-muted">Belum ada transaksi pembayaran pada periode ini.</p>
+        {{end}}
+        {{else}}
+        <p class="text-muted">Gagal memuat rincian pembayaran.</p>
+        {{end}}
     </div>
 </div>
 {{end}}

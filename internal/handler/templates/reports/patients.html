@@ -1,11 +1,11 @@
 {{define "title"}}Laporan Pasien{{end}}
 
 {{define "content"}}
-{{$ps := .Data}}
+{{$d := .Data}}{{$ps := $d.Summary}}
 <div class="page-header">
     <div>
         <h1 class="page-title">Laporan Pasien</h1>
-        <p class="page-subtitle">Ringkasan data pasien</p>
+        <p class="page-subtitle">Ringkasan dan daftar pasien terdaftar</p>
     </div>
     <a href="/reports" class="btn btn-secondary">Kembali</a>
 </div>
@@ -34,6 +34,60 @@
             <div class="stat-number">{{$ps.NewThisMonth}}</div>
             <div class="stat-label">Baru Bulan Ini</div>
         </div>
+    </div>
+</div>
+
+<div class="card" style="margin-top:24px;">
+    <div class="card-header">
+        <h3 class="card-title">Daftar Pasien Terdaftar</h3>
+        <div class="card-actions" style="display:flex;gap:8px;flex-wrap:wrap;">
+            <form method="GET" action="/reports/patients" style="display:flex;gap:8px;align-items:center;">
+                <label style="font-size:.85rem;">Dari</label>
+                <input type="date" name="from" class="form-input" value="{{$d.From}}" style="max-width:160px;">
+                <label style="font-size:.85rem;">Sampai</label>
+                <input type="date" name="to" class="form-input" value="{{$d.To}}" style="max-width:160px;">
+                <button type="submit" class="btn btn-primary btn-sm">Tampilkan</button>
+            </form>
+            <a href="/reports/export/patients?from={{$d.From}}&to={{$d.To}}" class="btn btn-success btn-sm">Export CSV</a>
+        </div>
+    </div>
+    <div class="card-body">
+        {{if $d.Rows}}
+        <p class="text-muted" style="margin-bottom:12px;">{{$d.Rows}} pasien ditemukan pada periode {{$d.From}} s/d {{$d.To}}</p>
+        <div class="table-responsive">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>No. RM</th>
+                        <th>Nama</th>
+                        <th>L/P</th>
+                        <th>Tgl Lahir</th>
+                        <th>Telepon</th>
+                        <th>Asuransi</th>
+                        <th>Terdaftar</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {{range $d.Rows}}
+                    <tr>
+                        <td><span class="badge badge-info">{{.MRN}}</span></td>
+                        <td><strong>{{.FullName}}</strong></td>
+                        <td>{{.Gender}}</td>
+                        <td>{{.BirthDate}}</td>
+                        <td>{{.Phone}}</td>
+                        <td>{{if .Insurance}}{{.Insurance}}{{else}}<span class="text-muted">Umum</span>{{end}}</td>
+                        <td>{{.CreatedAt}}</td>
+                    </tr>
+                    {{end}}
+                </tbody>
+            </table>
+        </div>
+        {{else}}
+        <div class="empty-state">
+            <h3>Tidak ada pasien pada periode ini</h3>
+            <p>Coba ubah rentang tanggal.</p>
+        </div>
+        {{end}}
     </div>
 </div>
 {{end}}

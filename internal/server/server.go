@@ -182,6 +182,9 @@ func (s *Server) registerWebRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("/reports/doctors", protected(management, s.wh.ReportsDoctorActivity))
 	mux.HandleFunc("/reports/revenue", protected(management, s.wh.ReportsRevenue))
 	mux.HandleFunc("/reports/medicines", protected(management, s.wh.ReportsMedicineStock))
+	mux.HandleFunc("/reports/export/patients", protected(management, s.wh.ExportPatientsCSV))
+	mux.HandleFunc("/reports/export/registrations", protected(management, s.wh.ExportRegistrationsCSV))
+	mux.HandleFunc("/reports/export/revenue", protected(management, s.wh.ExportRevenueCSV))
 
 	mux.HandleFunc("/audit-logs", protected(admin, s.wh.AuditLogsList))
 

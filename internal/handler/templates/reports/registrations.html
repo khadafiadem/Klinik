@@ -1,11 +1,11 @@
 {{define "title"}}Laporan Pendaftaran{{end}}
 
 {{define "content"}}
-{{$rs := .Data}}
+{{$d := .Data}}{{$rs := $d.Summary}}
 <div class="page-header">
     <div>
         <h1 class="page-title">Laporan Pendaftaran</h1>
-        <p class="page-subtitle">Ringkasan data pendaftaran</p>
+        <p class="page-subtitle">Ringkasan dan daftar kunjungan pasien</p>
     </div>
     <a href="/reports" class="btn btn-secondary">Kembali</a>
 </div>
@@ -34,6 +34,68 @@
             <div class="stat-number">{{$rs.CompletedToday}}</div>
             <div class="stat-label">Selesai Hari Ini</div>
         </div>
+    </div>
+</div>
+
+<div class="card" style="margin-top:24px;">
+    <div class="card-header">
+        <h3 class="card-title">Daftar Kunjungan</h3>
+        <div class="card-actions" style="display:flex;gap:8px;flex-wrap:wrap;">
+            <form method="GET" action="/reports/registrations" style="display:flex;gap:8px;align-items:center;">
+                <label style="font-size:.85rem;">Dari</label>
+                <input type="date" name="from" class="form-input" value="{{$d.From}}" style="max-width:160px;">
+                <label style="font-size:.85rem;">Sampai</label>
+                <input type="date" name="to" class="form-input" value="{{$d.To}}" style="max-width:160px;">
+                <button type="submit" class="btn btn-primary btn-sm">Tampilkan</button>
+            </form>
+            <a href="/reports/export/registrations?from={{$d.From}}&to={{$d.To}}" class="btn btn-success btn-sm">Export CSV</a>
+        </div>
+    </div>
+    <div class="card-body">
+        {{if $d.Rows}}
+        <p class="text-muted" style="margin-bottom:12px;">{{$d.Rows}} kunjungan pada periode {{$d.From}} s/d {{$d.To}}</p>
+        <div class="table-responsive">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>No. Daftar</th>
+                        <th>Tanggal</th>
+                        <th>Pasien</th>
+                        <th>Dokter</th>
+                        <th>Tipe</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {{range $d.Rows}}
+                    <tr>
+                        <td><span class="badge badge-info">{{.RegNumber}}</span></td>
+                        <td>{{.RegDate}}</td>
+                        <td><strong>{{.Patient}}</strong><br><small class="text-muted">{{.PatientMRN}}</small></td>
+                        <td>{{.Doctor}}</td>
+                        <td>{{.RegType}}</td>
+                        <td>
+                            {{if eq .Status "Selesai"}}
+                            <span class="badge badge-success">{{.Status}}</span>
+                            {{else if eq .Status "Batal"}}
+                            <span class="badge badge-danger">{{.Status}}</span>
+                            {{else if eq .Status "Sedang Diperiksa"}}
+                            <span class="badge badge-warning">{{.Status}}</span>
+                            {{else}}
+                            <span class="badge badge-secondary">{{.Status}}</span>
+                            {{end}}
+                        </td>
+                    </tr>
+                    {{end}}
+                </tbody>
+            </table>
+        </div>
+        {{else}}
+        <div class="empty-state">
+            <h3>Tidak ada kunjungan pada periode ini</h3>
+            <p>Coba ubah rentang tanggal.</p>
+        </div>
+        {{end}}
     </div>
 </div>
 {{end}}
