@@ -205,7 +205,8 @@ type VisitRow struct {
 func (s *Service) GetVisitRows(from, to string) ([]VisitRow, error) {
 	rows, err := s.db.Query(`SELECT g.registration_number, g.registration_date::text,
 		p.medical_record_number, p.full_name, d.full_name,
-		CASE g.registration_type WHEN 'BARU' THEN 'Pasien Baru' WHEN 'LAMA' THEN 'Pasien Lama' ELSE g.registration_type END,
+		CASE g.registration_type WHEN 'UMUM' THEN 'Umum' WHEN 'BPJS' THEN 'BPJS'
+			WHEN 'ASURANSI' THEN 'Asuransi' ELSE g.registration_type END,
 		CASE g.status WHEN 'WAITING' THEN 'Menunggu' WHEN 'CALLED' THEN 'Dipanggil'
 			WHEN 'IN_EXAMINATION' THEN 'Sedang Diperiksa' WHEN 'COMPLETED' THEN 'Selesai'
 			WHEN 'CANCELLED' THEN 'Batal' ELSE g.status END
