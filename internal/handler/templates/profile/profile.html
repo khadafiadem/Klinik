@@ -1,0 +1,85 @@
+{{define "title"}}Profil Saya{{end}}
+
+{{define "content"}}
+<div class="page-header">
+    <div class="page-header-left">
+        <h1>Profil Saya</h1>
+        <span class="page-subtitle">Informasi akun dan keamanan</span>
+    </div>
+</div>
+
+<div class="page-body">
+    {{if .Success}}
+    <div class="alert alert-success">{{.Success}}</div>
+    {{end}}
+    {{if .Error}}
+    <div class="alert alert-error">{{.Error}}</div>
+    {{end}}
+
+    <div class="dashboard-grid" style="grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 20px; align-items: start;">
+        <div class="card">
+            <div class="card-header">
+                <h2>Informasi Akun</h2>
+            </div>
+            <div class="card-body">
+                <table class="table" style="margin-bottom:0;">
+                    <tr>
+                        <td style="width:40%; color:var(--text-muted);">Username</td>
+                        <td><strong>{{.Data.Profile.Username}}</strong></td>
+                    </tr>
+                    <tr>
+                        <td style="color:var(--text-muted);">Nama Lengkap</td>
+                        <td>{{.Data.Profile.FullName}}</td>
+                    </tr>
+                    <tr>
+                        <td style="color:var(--text-muted);">Email</td>
+                        <td>{{.Data.Profile.Email}}</td>
+                    </tr>
+                    <tr>
+                        <td style="color:var(--text-muted);">Role</td>
+                        <td>{{range $i, $r := .Data.Profile.Roles}}{{if $i}}, {{end}}{{$r.Name}}{{end}}</td>
+                    </tr>
+                    <tr>
+                        <td style="color:var(--text-muted);">Status</td>
+                        <td>{{if .Data.Profile.IsActive}}<span class="badge badge-success">Aktif</span>{{else}}<span class="badge badge-danger">Nonaktif</span>{{end}}</td>
+                    </tr>
+                    <tr>
+                        <td style="color:var(--text-muted);">Login Terakhir</td>
+                        <td>{{if .Data.Profile.LastLogin}}{{.Data.Profile.LastLogin.Format "02 Jan 2006 15:04"}}{{else}}-{{end}}</td>
+                    </tr>
+                    <tr>
+                        <td style="color:var(--text-muted);">Dibuat</td>
+                        <td>{{.Data.Profile.CreatedAt.Format "02 Jan 2006"}}</td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <h2>Ganti Password</h2>
+            </div>
+            <div class="card-body">
+                <form method="POST" action="/profile/password">
+                    <div class="form-group">
+                        <label for="current_password">Password Saat Ini <span class="required">*</span></label>
+                        <input type="password" id="current_password" name="current_password" required placeholder="Masukkan password saat ini" autocomplete="current-password">
+                    </div>
+                    <div class="form-group">
+                        <label for="new_password">Password Baru <span class="required">*</span></label>
+                        <input type="password" id="new_password" name="new_password" required minlength="6" placeholder="Minimal 6 karakter" autocomplete="new-password">
+                    </div>
+                    <div class="form-group">
+                        <label for="confirm_password">Konfirmasi Password Baru <span class="required">*</span></label>
+                        <input type="password" id="confirm_password" name="confirm_password" required minlength="6" placeholder="Ulangi password baru" autocomplete="new-password">
+                        <span class="form-hint">Gunakan password yang kuat dan mudah Anda ingat.</span>
+                    </div>
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary">&#128274; Ubah Password</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{{end}}

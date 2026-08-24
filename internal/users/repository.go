@@ -260,6 +260,19 @@ func (r *Repository) ReplaceUserRole(userID, roleID int) error {
 	return tx.Commit()
 }
 
+func (r *Repository) GetPasswordHash(id int) (string, error) {
+	var hash string
+	query := `SELECT password_hash FROM users WHERE id = $1`
+	err := r.db.QueryRow(query, id).Scan(&hash)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return "", fmt.Errorf("user tidak ditemukan")
+		}
+		return "", fmt.Errorf("gagal mengambil data user: %w", err)
+	}
+	return hash, nil
+}
+
 func (r *Repository) UpdatePassword(id int, passwordHash string) error {
 	result, err := r.db.Exec(`UPDATE users SET password_hash = $1, updated_at = NOW() WHERE id = $2`, passwordHash, id)
 	if err != nil {

@@ -114,6 +114,8 @@ func (s *Server) registerWebRoutes(mux *http.ServeMux) {
 	)
 
 	mux.HandleFunc("/dashboard", protected(all, s.wh.Dashboard))
+	mux.HandleFunc("/profile", protected(all, s.wh.Profile))
+	mux.HandleFunc("/profile/password", protected(all, s.wh.ProfilePasswordPost))
 	mux.HandleFunc("/clinic-settings", protected(admin, s.wh.ClinicSettings))
 	mux.HandleFunc("/settings/bpjs/doctors", protected(admin, s.wh.BPJSDoctorMapPost))
 	mux.HandleFunc("/settings/bpjs", protected(admin, s.wh.BPJSSettings))

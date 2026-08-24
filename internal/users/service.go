@@ -4,6 +4,8 @@ import (
 	"database/sql"
 	"fmt"
 
+	"golang.org/x/crypto/bcrypt"
+
 	"klinik-app/internal/auth"
 )
 
@@ -148,4 +150,42 @@ func (s *Service) SetPassword(id int, password string) error {
 		return err
 	}
 	return s.repo.UpdatePassword(id, hash)
+}
+
+// ChangeOwnPassword mengubah password oleh user itu sendiri.
+// Password saat ini wajib diverifikasi terlebih dahulu.
+func (s *Service) ChangeOwnPassword(id int, currentPassword, newPassword string) error {
+	if err := ValidatePasswordChange(currentPassword, newPassword); err != nil {
+		return err
+	}
+
+	hash, err := s.repo.GetPasswordHash(id)
+	if err != nil {
+		return fmt.Errorf("user tidak ditemukan")
+	}
+
+	if err := bcrypt.CompareHashAndPassword([]byte(hash), []byte(currentPassword)); err != nil {
+		return fmt.Errorf("password lama tidak sesuai")
+	}
+
+	newHash, err := auth.HashPassword(newPassword)
+	if err != nil {
+		return err
+	}
+
+	return s.repo.UpdatePassword(id, newHash)
+}
+
+// ValidatePasswordChange memvalidasi aturan penggantian password.
+func ValidatePasswordChange(currentPassword, newPassword string) error {
+	if currentPassword == "" || newPassword == "" {
+		return fmt.Errorf("password lama dan password baru wajib diisi")
+	}
+	if len(newPassword) < 6 {
+		return fmt.Errorf("password baru minimal 6 karakter")
+	}
+	if newPassword == currentPassword {
+		return fmt.Errorf("password baru tidak boleh sama dengan password lama")
+	}
+	return nil
 }

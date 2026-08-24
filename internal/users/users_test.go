@@ -102,3 +102,58 @@ func TestPaginationDefaults(t *testing.T) {
 		})
 	}
 }
+
+func TestValidatePasswordChange(t *testing.T) {
+	tests := []struct {
+		name     string
+		current  string
+		newPass  string
+		expected string
+	}{
+		{
+			name:     "valid change",
+			current:  "oldpass123",
+			newPass:  "newpass456",
+			expected: "",
+		},
+		{
+			name:     "empty current password",
+			current:  "",
+			newPass:  "newpass456",
+			expected: "password lama dan password baru wajib diisi",
+		},
+		{
+			name:     "empty new password",
+			current:  "oldpass123",
+			newPass:  "",
+			expected: "password lama dan password baru wajib diisi",
+		},
+		{
+			name:     "new password too short",
+			current:  "oldpass123",
+			newPass:  "12345",
+			expected: "password baru minimal 6 karakter",
+		},
+		{
+			name:     "same as current password",
+			current:  "samepass123",
+			newPass:  "samepass123",
+			expected: "password baru tidak boleh sama dengan password lama",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := ValidatePasswordChange(tt.current, tt.newPass)
+			if tt.expected == "" {
+				if err != nil {
+					t.Errorf("expected no error, got '%s'", err.Error())
+				}
+				return
+			}
+			if err == nil || err.Error() != tt.expected {
+				t.Errorf("expected error '%s', got '%v'", tt.expected, err)
+			}
+		})
+	}
+}

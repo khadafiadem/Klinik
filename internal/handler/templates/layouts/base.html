@@ -82,13 +82,15 @@
         </div>
 
         <div class="sidebar-footer">
-            <div class="sidebar-user">
-                <div class="sidebar-avatar">{{slice .User.FullName 0 1}}</div>
-                <div class="sidebar-user-info">
-                    <span class="sidebar-user-name">{{.User.FullName}}</span>
-                    <span class="sidebar-user-role">{{range .User.Roles}}{{.Name}}{{end}}</span>
+            <a href="/profile" class="{{if eq .ActivePage "profile"}}active{{end}}" style="text-decoration:none;display:block;" title="Profil Saya">
+                <div class="sidebar-user">
+                    <div class="sidebar-avatar">{{slice .User.FullName 0 1}}</div>
+                    <div class="sidebar-user-info">
+                        <span class="sidebar-user-name">{{.User.FullName}}</span>
+                        <span class="sidebar-user-role">Profil Saya</span>
+                    </div>
                 </div>
-            </div>
+            </a>
             <a href="/logout" class="btn-logout">&#10140; Keluar</a>
         </div>
     </nav>
