@@ -22,6 +22,7 @@ func (h *WebHandler) QueuesPage(w http.ResponseWriter, r *http.Request, user *au
 	date := r.URL.Query().Get("date")
 	list, _ := h.queueSvc.GetAllByDate(date)
 	waiting, inProgress, completed, _ := h.queueSvc.GetTodayStats()
+	paused, _ := h.queueSvc.IsPaused()
 
 	RenderTemplate(w, r, "queues/index", TemplateData{
 		User:  user,
@@ -31,6 +32,7 @@ func (h *WebHandler) QueuesPage(w http.ResponseWriter, r *http.Request, user *au
 			"Waiting":    waiting,
 			"InProgress": inProgress,
 			"Completed":  completed,
+			"Paused":     paused,
 		},
 	})
 }
@@ -77,6 +79,12 @@ func (h *WebHandler) QueueAction(w http.ResponseWriter, r *http.Request, user *a
 		h.queueSvc.UpdateStatus(id, status)
 	}
 
+	// Auto-call next waiting patient after starting examination
+	var autoCalled *queues.Queue
+	if action == "start" {
+		autoCalled, _ = h.queueSvc.CallNextPatient()
+	}
+
 	switch {
 	case bpjsStatus > 0:
 		s := bpjsStatus
@@ -84,6 +92,8 @@ func (h *WebHandler) QueueAction(w http.ResponseWriter, r *http.Request, user *a
 	case action == "cancel":
 		h.syncBPJS(func(svc *bpjs.Service) { svc.OnQueueCancelled(id, cancelReason) })
 	}
+
+	_ = autoCalled
 
 	http.Redirect(w, r, "/queues", http.StatusSeeOther)
 }
@@ -208,5 +218,45 @@ func (h *WebHandler) DisplayAPI(w http.ResponseWriter, r *http.Request) {
 		"clinicName":  clinicName,
 		"clinicAddress": clinicAddress,
 		"currentCalled": currentCalled,
+		"paused":      false,
+	})
+}
+
+func (h *WebHandler) QueueTogglePause(w http.ResponseWriter, r *http.Request, user *auth.User) {
+	paused, _ := h.queueSvc.IsPaused()
+	newState := !paused
+	h.queueSvc.SetPaused(newState)
+
+	http.Redirect(w, r, "/queues", http.StatusSeeOther)
+}
+
+func (h *WebHandler) QueueCallNext(w http.ResponseWriter, r *http.Request, user *auth.User) {
+	http.Redirect(w, r, "/queues", http.StatusSeeOther)
+}
+
+// QueueCallNextAPI panggil pasien berikutnya (untuk AJAX manual call).
+func (h *WebHandler) QueueCallNextAPI(w http.ResponseWriter, r *http.Request, user *auth.User) {
+	w.Header().Set("Content-Type", "application/json")
+
+	called, err := h.queueSvc.CallNextPatient()
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"success": false,
+			"message": err.Error(),
+		})
+		return
+	}
+	if called == nil {
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"success": false,
+			"message": "Tidak ada pasien menunggu atau sistem dalam posisi jeda",
+		})
+		return
+	}
+
+	json.NewEncoder(w).Encode(map[string]interface{}{
+		"success": true,
+		"queue":   called,
 	})
 }

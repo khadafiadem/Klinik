@@ -145,12 +145,15 @@ func (s *Server) registerWebRoutes(mux *http.ServeMux) {
 
 	mux.HandleFunc("/queues", protected(regAcc, s.wh.QueuesPage))
 	mux.HandleFunc("/queues/add", protected(nurse, s.wh.QueueAdd))
+	mux.HandleFunc("/queues/pause", protected(regAcc, s.wh.QueueTogglePause))
+	mux.HandleFunc("/queues/call-next", protected(regAcc, s.wh.QueueCallNext))
 	mux.HandleFunc("/queues/", protected(regAcc, s.wh.QueueAction))
 
 	mux.HandleFunc("/antrian/kiosk", s.wh.KioskPage)
 	mux.HandleFunc("/antrian/display", s.wh.DisplayPage)
 	mux.HandleFunc("/api/queue/take", s.wh.KioskTakeNumber)
 	mux.HandleFunc("/api/queue/monitor", s.wh.DisplayAPI)
+	mux.HandleFunc("/api/queue/call-next", protected(regAcc, s.wh.QueueCallNextAPI))
 
 	mux.HandleFunc("/medical-records", protected(medicalAcc, s.wh.MedicalRecordsList))
 	mux.HandleFunc("/medical-records/new", protected(doctor, s.wh.MedicalRecordForm))

@@ -205,6 +205,53 @@ func (r *Repository) LinkToRegistration(queueID int, registrationID, patientID, 
 	return err
 }
 
+func (r *Repository) IsPaused() (bool, error) {
+	var paused bool
+	err := r.db.QueryRow("SELECT paused FROM queue_config WHERE id = 1").Scan(&paused)
+	if err != nil {
+		return false, nil
+	}
+	return paused, nil
+}
+
+func (r *Repository) SetPaused(paused bool) error {
+	_, err := r.db.Exec(
+		"UPDATE queue_config SET paused = $1, updated_at = NOW() WHERE id = 1", paused)
+	return err
+}
+
+func (r *Repository) GetNextWaiting() (*Queue, error) {
+	query := `SELECT q.id, q.queue_number, q.registration_id,
+		COALESCE(r.registration_number,''),
+		q.patient_id, COALESCE(p.full_name,''), COALESCE(p.medical_record_number,''),
+		q.doctor_id, COALESCE(d.full_name,''), COALESCE(q.doctor_name_snapshot,''),
+		q.queue_date, q.status, q.queue_source, q.called_by, COALESCE(u.full_name,''),
+		q.called_at, q.started_at, q.completed_at, q.created_at, q.updated_at
+		FROM queues q
+		LEFT JOIN registrations r ON q.registration_id = r.id
+		LEFT JOIN patients p ON q.patient_id = p.id
+		LEFT JOIN doctors d ON q.doctor_id = d.id
+		LEFT JOIN users u ON q.called_by = u.id
+		WHERE q.queue_date = CURRENT_DATE
+		  AND q.status = 'MENUNGGU'
+		  AND q.registration_id IS NOT NULL
+		ORDER BY q.queue_number ASC
+		LIMIT 1`
+
+	q := &Queue{}
+	err := r.db.QueryRow(query).Scan(
+		&q.ID, &q.QueueNumber, &q.RegistrationID, &q.RegistrationNum,
+		&q.PatientID, &q.PatientName, &q.PatientMRN,
+		&q.DoctorID, &q.DoctorName, &q.DoctorNameSnapshot,
+		&q.QueueDate, &q.Status, &q.QueueSource, &q.CalledBy, &q.CalledByName,
+		&q.CalledAt, &q.StartedAt, &q.CompletedAt, &q.CreatedAt, &q.UpdatedAt,
+	)
+	if err != nil {
+		return nil, err
+	}
+	return q, nil
+}
+
 func (r *Repository) GetMonitorData(date string) ([]Queue, error) {
 	query := `SELECT q.id, q.queue_number, q.registration_id,
 		COALESCE(r.registration_number,''),

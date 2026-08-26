@@ -39,16 +39,38 @@
     </div>
 </div>
 
-<!-- Quick Links -->
-<div style="display:flex;gap:10px;margin-bottom:24px;">
+<!-- Quick Links & Controls -->
+<div style="display:flex;gap:10px;margin-bottom:24px;flex-wrap:wrap;align-items:center;">
     <a href="/antrian/kiosk" target="_blank" class="btn btn-accent">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
-        Buka Kiosk Antrian
+        Kiosk
     </a>
     <a href="/antrian/display" target="_blank" class="btn btn-info">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
-        Buka Monitor Antrian (TV)
+        Monitor TV
     </a>
+    <form method="POST" action="/queues/pause" style="display:inline;">
+        {{if (index .Data "Paused")}}
+        <button type="submit" class="btn btn-success" id="pauseBtn">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+            Lanjutkan Antrian
+        </button>
+        {{else}}
+        <button type="submit" class="btn btn-warning" id="pauseBtn">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
+            Jeda Antrian
+        </button>
+        {{end}}
+    </form>
+    <form method="POST" action="/queues/call-next" style="display:inline;">
+        <button type="submit" class="btn btn-primary" id="callNextBtn">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6A19.79 19.79 0 0 1 2.12 4.18 2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.362 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.574 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+            Panggil Berikutnya
+        </button>
+    </form>
+    {{if (index .Data "Paused")}}
+    <span class="badge badge-warning" style="font-size:0.85em;padding:8px 14px;">SISTEM DIJEDA — Antrian otomatis berhenti</span>
+    {{end}}
 </div>
 
 <div class="card">

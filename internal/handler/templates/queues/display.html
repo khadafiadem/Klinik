@@ -423,9 +423,13 @@
                 renderQueueList('progressList', progress, 'PROGRESS');
                 renderQueueList('doneList', done, 'SELESAI');
 
-                // Play sound when new call
+                // Play sound + speak when new call
                 if (called && (!currentCalledData || currentCalledData.id !== called.id)) {
                     playBeep();
+                    var doctor = called.doctor_name || called.doctor_name_snapshot || 'Dokter';
+                    setTimeout(function() {
+                        speakQueueAnnouncement(called.queue_number, doctor);
+                    }, 600);
                 }
                 currentCalledData = called;
             })
@@ -504,6 +508,27 @@
                 gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.5);
                 osc.stop(ctx.currentTime + 0.5);
             } catch(e) {}
+        }
+
+        function speakQueueAnnouncement(queueNumber, doctorName) {
+            if (!('speechSynthesis' in window)) return;
+            window.speechSynthesis.cancel();
+            var text = 'Nomor antrian ' + queueNumber.replace(/-/g, ' ') + ', silakan ke ruang dokter ' + doctorName;
+            var utterance = new SpeechSynthesisUtterance(text);
+            utterance.lang = 'id-ID';
+            utterance.rate = 0.85;
+            utterance.pitch = 1.0;
+            utterance.volume = 1.0;
+            var voices = window.speechSynthesis.getVoices();
+            var idVoice = null;
+            for (var i = 0; i < voices.length; i++) {
+                if (voices[i].lang.indexOf('id') === 0) {
+                    idVoice = voices[i];
+                    break;
+                }
+            }
+            if (idVoice) utterance.voice = idVoice;
+            window.speechSynthesis.speak(utterance);
         }
 
         function toggleFullscreen() {

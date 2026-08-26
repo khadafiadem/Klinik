@@ -58,6 +58,16 @@ END $$;
 CREATE INDEX IF NOT EXISTS idx_queues_source ON queues(queue_source);
 `
 
+const bootstrapMigration023 = `
+CREATE TABLE IF NOT EXISTS queue_config (
+    id INT PRIMARY KEY DEFAULT 1,
+    paused BOOLEAN NOT NULL DEFAULT FALSE,
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+INSERT INTO queue_config (id, paused) VALUES (1, FALSE)
+    ON CONFLICT (id) DO NOTHING;
+`
+
 func initHandler() {
 	logger.Init("info")
 
@@ -80,6 +90,7 @@ func initHandler() {
 			logger.Info.Printf("File migration skipped (Vercel): %v", err)
 		}
 		migrator.RunBootstrapSQL(bootstrapMigration022)
+		migrator.RunBootstrapSQL(bootstrapMigration023)
 	}
 
 	srv := server.New(cfg, db)

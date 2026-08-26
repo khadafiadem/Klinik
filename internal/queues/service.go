@@ -114,3 +114,34 @@ func (s *Service) UpdateStatusCalledBy(id int, status string, calledBy int) erro
 func (s *Service) GetTodayStats() (waiting, inProgress, completed int, err error) {
 	return s.repo.GetTodayStats()
 }
+
+func (s *Service) IsPaused() (bool, error) {
+	return s.repo.IsPaused()
+}
+
+func (s *Service) SetPaused(paused bool) error {
+	return s.repo.SetPaused(paused)
+}
+
+// CallNextPatient memanggil pasien berikutnya secara otomatis (FIFO).
+// Mengembalikan pasien yang dipanggil, atau nil jika tidak ada yang menunggu atau jeda aktif.
+func (s *Service) CallNextPatient() (*Queue, error) {
+	paused, err := s.repo.IsPaused()
+	if err != nil {
+		return nil, err
+	}
+	if paused {
+		return nil, nil
+	}
+
+	next, err := s.repo.GetNextWaiting()
+	if err != nil {
+		return nil, nil
+	}
+
+	if err := s.repo.UpdateStatus(next.ID, "DIPANGGIL"); err != nil {
+		return nil, err
+	}
+
+	return next, nil
+}
