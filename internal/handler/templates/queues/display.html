@@ -445,48 +445,34 @@
     <script>
         var currentCalledData = null;
         var refreshInterval = 3000;
-        var audioCtx = null;
         var soundEnabled = localStorage.getItem('queueSoundEnabled') === '1';
 
-        // --- Sound unlock ---
+        // --- Sound unlock overlay ---
         function showSoundOverlay() {
             document.getElementById('soundOverlay').classList.remove('hidden');
         }
 
         function enableSound() {
-            // Unlock AudioContext
             try {
-                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-                if (audioCtx.state === 'suspended') audioCtx.resume();
-                // Play silent buffer to unlock
-                var buf = audioCtx.createBuffer(1, 1, 22050);
-                var src = audioCtx.createBufferSource();
+                var ctx = new (window.AudioContext || window.webkitAudioContext)();
+                if (ctx.state === 'suspended') ctx.resume();
+                var buf = ctx.createBuffer(1, 1, 22050);
+                var src = ctx.createBufferSource();
                 src.buffer = buf;
-                src.connect(audioCtx.destination);
+                src.connect(ctx.destination);
                 src.start(0);
             } catch(e) {}
 
-            // Preload voices
             if ('speechSynthesis' in window) {
-                var v = window.speechSynthesis.getVoices();
-                speechReady = v.length > 0;
+                window.speechSynthesis.getVoices();
                 window.speechSynthesis.onvoiceschanged = function() {
-                    var v2 = window.speechSynthesis.getVoices();
-                    speechReady = v2.length > 0;
+                    window.speechSynthesis.getVoices();
                 };
-            }
-
-            // Test speak
-            try {
                 var test = new SpeechSynthesisUtterance('Suara aktif');
                 test.lang = 'id-ID';
                 test.volume = 0.7;
-                test.rate = 0.9;
-                test.onerror = function() {
-                    console.warn('Test speech failed, will use tone fallback');
-                };
-                window.speechSynthesis.speak(test);
-            } catch(e) {}
+                try { window.speechSynthesis.speak(test); } catch(e) {}
+            }
 
             soundEnabled = true;
             localStorage.setItem('queueSoundEnabled', '1');
@@ -505,13 +491,8 @@
             }
         }
 
-        // Restore state
         if (soundEnabled) {
             document.getElementById('soundOverlay').classList.add('hidden');
-            // Create AudioContext on first interaction (page load with permission)
-            try {
-                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-            } catch(e) {}
         }
         updateSoundStatus();
 
@@ -559,13 +540,11 @@
                 renderQueueList('progressList', progress, 'PROGRESS');
                 renderQueueList('doneList', done, 'SELESAI');
 
-                // Play sound + speak when new call
                 if (soundEnabled && called && (!currentCalledData || currentCalledData.id !== called.id)) {
-                    playBeep();
+                    playAlertSound();
                     var doctor = called.doctor_name || called.doctor_name_snapshot || 'Dokter';
-                    setTimeout(function() {
-                        speakQueueAnnouncement(called.queue_number, doctor);
-                    }, 700);
+                    var qNum = called.queue_number;
+                    setTimeout(function() { speakAnnouncement(qNum, doctor); }, 800);
                 }
                 currentCalledData = called;
             })
@@ -604,7 +583,6 @@
                 if (q.status === 'DIPANGGIL') cls += ' called';
                 else if (q.status === 'SEDANG_DIPERIKSA') cls += ' inprogress';
                 else if (q.status === 'SELESAI') cls += ' done';
-
                 var doctor = q.doctor_name || q.doctor_name_snapshot || '';
                 var statusText = '';
                 switch(q.status) {
@@ -613,7 +591,6 @@
                     case 'SEDANG_DIPERIKSA': statusText = 'Diperiksa'; break;
                     case 'SELESAI': statusText = 'Selesai'; break;
                 }
-
                 html += '<div class="' + cls + '">' +
                     '<div class="queue-card-number">' + escapeHtml(q.queue_number) + '</div>' +
                     '<div class="queue-card-doctor">' + escapeHtml(doctor) + '</div>' +
@@ -630,115 +607,76 @@
             return div.innerHTML;
         }
 
-        // --- Audio: Beep ---
-        function playBeep() {
+        // --- Alert sound: double beep (always works) ---
+        function playAlertSound() {
             try {
-                var ctx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
-                if (ctx.state === 'suspended') ctx.resume();
-                var osc = ctx.createOscillator();
-                var gain = ctx.createGain();
-                osc.connect(gain);
-                gain.connect(ctx.destination);
-                osc.frequency.value = 800;
-                osc.type = 'sine';
-                gain.gain.value = 0.4;
-                osc.start();
-                gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.5);
-                osc.stop(ctx.currentTime + 0.5);
-                // Second beep
-                var osc2 = ctx.createOscillator();
-                var gain2 = ctx.createGain();
-                osc2.connect(gain2);
-                gain2.connect(ctx.destination);
-                osc2.frequency.value = 1000;
-                osc2.type = 'sine';
-                gain2.gain.value = 0.4;
-                osc2.start(ctx.currentTime + 0.15);
-                gain2.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.65);
-                osc2.stop(ctx.currentTime + 0.65);
+                var ctx = new (window.AudioContext || window.webkitAudioContext)();
+                if (ctx.state === 'suspended') {
+                    ctx.resume().then(function() { playTones(ctx); });
+                } else {
+                    playTones(ctx);
+                }
             } catch(e) {}
         }
 
-        // --- Audio: Speech announcement ---
-        var speechReady = false;
+        function playTones(ctx) {
+            // Beep 1
+            var o1 = ctx.createOscillator();
+            var g1 = ctx.createGain();
+            o1.connect(g1); g1.connect(ctx.destination);
+            o1.frequency.value = 800; o1.type = 'sine';
+            g1.gain.setValueAtTime(0.5, ctx.currentTime);
+            o1.start(ctx.currentTime);
+            g1.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.3);
+            o1.stop(ctx.currentTime + 0.3);
 
-        function initSpeech() {
-            if (!('speechSynthesis' in window)) return;
-            window.speechSynthesis.onvoiceschanged = function() {
-                speechReady = window.speechSynthesis.getVoices().length > 0;
-            };
-            speechReady = window.speechSynthesis.getVoices().length > 0;
+            // Beep 2
+            var o2 = ctx.createOscillator();
+            var g2 = ctx.createGain();
+            o2.connect(g2); g2.connect(ctx.destination);
+            o2.frequency.value = 1000; o2.type = 'sine';
+            g2.gain.setValueAtTime(0.5, ctx.currentTime + 0.15);
+            o2.start(ctx.currentTime + 0.15);
+            g2.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.45);
+            o2.stop(ctx.currentTime + 0.45);
+
+            // Beep 3 (higher)
+            var o3 = ctx.createOscillator();
+            var g3 = ctx.createGain();
+            o3.connect(g3); g3.connect(ctx.destination);
+            o3.frequency.value = 1200; o3.type = 'sine';
+            g3.gain.setValueAtTime(0.5, ctx.currentTime + 0.3);
+            o3.start(ctx.currentTime + 0.3);
+            g3.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.6);
+            o3.stop(ctx.currentTime + 0.6);
         }
-        initSpeech();
 
-        function speakQueueAnnouncement(queueNumber, doctorName) {
+        // --- Speech announcement ---
+        function speakAnnouncement(queueNumber, doctorName) {
             if (!('speechSynthesis' in window)) return;
 
             window.speechSynthesis.cancel();
-
             var text = 'Nomor antrian ' + queueNumber.replace(/-/g, ' ') + ', silakan ke ruang dokter ' + doctorName;
-            var utterance = new SpeechSynthesisUtterance(text);
-            utterance.rate = 0.85;
-            utterance.pitch = 1.0;
-            utterance.volume = 1.0;
+            var utt = new SpeechSynthesisUtterance(text);
+            utt.rate = 0.85;
+            utt.pitch = 1.0;
+            utt.volume = 1.0;
 
             var voices = window.speechSynthesis.getVoices();
-            var chosenVoice = null;
-
-            for (var i = 0; i < voices.length; i++) {
-                var lang = voices[i].lang || '';
-                if (lang.indexOf('id') === 0) { chosenVoice = voices[i]; break; }
+            var chosen = null;
+            var i;
+            for (i = 0; i < voices.length; i++) {
+                var lang = (voices[i].lang || '').toLowerCase();
+                if (lang.indexOf('id') === 0 || lang.indexOf('ms') === 0) { chosen = voices[i]; break; }
             }
-            if (!chosenVoice) {
-                for (var i = 0; i < voices.length; i++) {
-                    var lang = voices[i].lang || '';
-                    if (lang.indexOf('ms') === 0) { chosenVoice = voices[i]; break; }
+            if (!chosen) {
+                for (i = 0; i < voices.length; i++) {
+                    if ((voices[i].lang || '').toLowerCase().indexOf('en') === 0) { chosen = voices[i]; break; }
                 }
             }
-            if (!chosenVoice) {
-                for (var i = 0; i < voices.length; i++) {
-                    var lang = voices[i].lang || '';
-                    if (lang.indexOf('en') === 0) { chosenVoice = voices[i]; break; }
-                }
-            }
+            if (chosen) { utt.voice = chosen; utt.lang = chosen.lang; }
 
-            if (chosenVoice) {
-                utterance.voice = chosenVoice;
-                utterance.lang = chosenVoice.lang;
-            }
-
-            utterance.onerror = function(e) {
-                console.warn('Speech synthesis error:', e.error);
-                playAlternateTone();
-            };
-
-            window.speechSynthesis.speak(utterance);
-
-            setTimeout(function() {
-                if (window.speechSynthesis.speaking) return;
-                console.warn('Speech not playing, fallback to tone');
-                playAlternateTone();
-            }, 500);
-        }
-
-        function playAlternateTone() {
-            try {
-                var ctx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
-                if (ctx.state === 'suspended') ctx.resume();
-                var freqs = [523, 659, 784, 1047];
-                freqs.forEach(function(f, i) {
-                    var osc = ctx.createOscillator();
-                    var gain = ctx.createGain();
-                    osc.connect(gain);
-                    gain.connect(ctx.destination);
-                    osc.frequency.value = f;
-                    osc.type = 'sine';
-                    gain.gain.value = 0.3;
-                    osc.start(ctx.currentTime + i * 0.25);
-                    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + i * 0.25 + 0.3);
-                    osc.stop(ctx.currentTime + i * 0.25 + 0.3);
-                });
-            } catch(e) {}
+            window.speechSynthesis.speak(utt);
         }
 
         function toggleFullscreen() {
