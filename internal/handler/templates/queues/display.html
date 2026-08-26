@@ -314,6 +314,66 @@
             background:rgba(255,255,255,0.2);
             color:white;
         }
+
+        /* Sound unlock overlay */
+        .sound-overlay {
+            position:fixed;
+            inset:0;
+            background:rgba(0,0,0,0.85);
+            z-index:1000;
+            display:flex;
+            flex-direction:column;
+            align-items:center;
+            justify-content:center;
+            gap:20px;
+        }
+        .sound-overlay.hidden { display:none; }
+        .sound-overlay h2 {
+            font-size:2rem;
+            font-weight:800;
+            color:white;
+        }
+        .sound-overlay p {
+            color:rgba(255,255,255,0.6);
+            font-size:1rem;
+        }
+        .sound-enable-btn {
+            padding:18px 48px;
+            font-size:1.3rem;
+            font-weight:700;
+            border:none;
+            border-radius:16px;
+            background:linear-gradient(135deg,#0891b2,#0e7490);
+            color:white;
+            cursor:pointer;
+            transition:transform 0.2s, box-shadow 0.2s;
+            box-shadow:0 4px 20px rgba(8,145,178,0.4);
+        }
+        .sound-enable-btn:hover {
+            transform:scale(1.05);
+            box-shadow:0 6px 30px rgba(8,145,178,0.6);
+        }
+        .sound-status {
+            position:fixed;
+            top:80px;
+            right:32px;
+            z-index:10;
+            padding:6px 14px;
+            border-radius:8px;
+            font-size:0.75rem;
+            font-weight:600;
+            transition:all 0.3s;
+        }
+        .sound-status.on {
+            background:rgba(16,185,129,0.2);
+            color:#10b981;
+            border:1px solid rgba(16,185,129,0.3);
+        }
+        .sound-status.off {
+            background:rgba(239,68,68,0.2);
+            color:#ef4444;
+            border:1px solid rgba(239,68,68,0.3);
+        }
     </style>
 </head>
 <body>
@@ -373,11 +433,81 @@
     </div>
 
     <button class="fullscreen-btn" onclick="toggleFullscreen()" title="Fullscreen">&#9974;</button>
+    <div class="sound-status off" id="soundStatus" onclick="showSoundOverlay()">&#128264; Suara Mati</div>
+
+    <!-- Sound unlock overlay -->
+    <div class="sound-overlay" id="soundOverlay">
+        <h2>Aktifkan Suara Antrian</h2>
+        <p>Klik tombol di bawah agar layar dapat mengumumkan nomor antrian</p>
+        <button class="sound-enable-btn" id="enableSoundBtn" onclick="enableSound()">&#128266; Aktifkan Suara</button>
+    </div>
 
     <script>
         var currentCalledData = null;
         var refreshInterval = 3000;
+        var audioCtx = null;
+        var soundEnabled = localStorage.getItem('queueSoundEnabled') === '1';
 
+        // --- Sound unlock ---
+        function showSoundOverlay() {
+            document.getElementById('soundOverlay').classList.remove('hidden');
+        }
+
+        function enableSound() {
+            // Unlock AudioContext
+            try {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                if (audioCtx.state === 'suspended') audioCtx.resume();
+                // Play silent buffer to unlock
+                var buf = audioCtx.createBuffer(1, 1, 22050);
+                var src = audioCtx.createBufferSource();
+                src.buffer = buf;
+                src.connect(audioCtx.destination);
+                src.start(0);
+            } catch(e) {}
+
+            // Preload voices
+            if ('speechSynthesis' in window) {
+                window.speechSynthesis.getVoices();
+                window.speechSynthesis.onvoiceschanged = function() {
+                    window.speechSynthesis.getVoices();
+                };
+            }
+
+            // Test speak
+            var test = new SpeechSynthesisUtterance('Suara aktif');
+            test.lang = 'id-ID';
+            test.volume = 0.7;
+            window.speechSynthesis.speak(test);
+
+            soundEnabled = true;
+            localStorage.setItem('queueSoundEnabled', '1');
+            document.getElementById('soundOverlay').classList.add('hidden');
+            updateSoundStatus();
+        }
+
+        function updateSoundStatus() {
+            var el = document.getElementById('soundStatus');
+            if (soundEnabled) {
+                el.className = 'sound-status on';
+                el.innerHTML = '&#128266; Suara Aktif';
+            } else {
+                el.className = 'sound-status off';
+                el.innerHTML = '&#128264; Suara Mati';
+            }
+        }
+
+        // Restore state
+        if (soundEnabled) {
+            document.getElementById('soundOverlay').classList.add('hidden');
+            // Create AudioContext on first interaction (page load with permission)
+            try {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            } catch(e) {}
+        }
+        updateSoundStatus();
+
+        // --- Clock ---
         function updateClock() {
             var now = new Date();
             var h = String(now.getHours()).padStart(2,'0');
@@ -391,6 +521,7 @@
         updateClock();
         setInterval(updateClock, 1000);
 
+        // --- Fetch queue data ---
         function fetchQueueData() {
             var today = new Date().toISOString().split('T')[0];
             fetch('/api/queue/monitor?d=' + today)
@@ -415,21 +546,18 @@
                     }
                 });
 
-                // Update current called
                 updateCurrentCalled(called);
-
-                // Update lists
                 renderQueueList('waitingList', waiting, 'MENUNGGU');
                 renderQueueList('progressList', progress, 'PROGRESS');
                 renderQueueList('doneList', done, 'SELESAI');
 
                 // Play sound + speak when new call
-                if (called && (!currentCalledData || currentCalledData.id !== called.id)) {
+                if (soundEnabled && called && (!currentCalledData || currentCalledData.id !== called.id)) {
                     playBeep();
                     var doctor = called.doctor_name || called.doctor_name_snapshot || 'Dokter';
                     setTimeout(function() {
                         speakQueueAnnouncement(called.queue_number, doctor);
-                    }, 600);
+                    }, 700);
                 }
                 currentCalledData = called;
             })
@@ -494,22 +622,36 @@
             return div.innerHTML;
         }
 
+        // --- Audio: Beep ---
         function playBeep() {
             try {
-                var ctx = new (window.AudioContext || window.webkitAudioContext)();
+                var ctx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
+                if (ctx.state === 'suspended') ctx.resume();
                 var osc = ctx.createOscillator();
                 var gain = ctx.createGain();
                 osc.connect(gain);
                 gain.connect(ctx.destination);
                 osc.frequency.value = 800;
                 osc.type = 'sine';
-                gain.gain.value = 0.3;
+                gain.gain.value = 0.4;
                 osc.start();
                 gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.5);
                 osc.stop(ctx.currentTime + 0.5);
+                // Second beep
+                var osc2 = ctx.createOscillator();
+                var gain2 = ctx.createGain();
+                osc2.connect(gain2);
+                gain2.connect(ctx.destination);
+                osc2.frequency.value = 1000;
+                osc2.type = 'sine';
+                gain2.gain.value = 0.4;
+                osc2.start(ctx.currentTime + 0.15);
+                gain2.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.65);
+                osc2.stop(ctx.currentTime + 0.65);
             } catch(e) {}
         }
 
+        // --- Audio: Speech announcement ---
         function speakQueueAnnouncement(queueNumber, doctorName) {
             if (!('speechSynthesis' in window)) return;
             window.speechSynthesis.cancel();
