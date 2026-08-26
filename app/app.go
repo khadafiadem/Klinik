@@ -16,6 +16,48 @@ var (
 	initErr  error
 )
 
+const bootstrapMigration022 = `
+CREATE SEQUENCE IF NOT EXISTS kiosk_queue_seq START 1;
+
+DO $$ BEGIN
+    ALTER TABLE queues ADD COLUMN IF NOT EXISTS queue_source VARCHAR(20) NOT NULL DEFAULT 'ADMIN';
+EXCEPTION WHEN duplicate_column THEN NULL;
+END $$;
+
+DO $$ BEGIN
+    ALTER TABLE queues ADD COLUMN IF NOT EXISTS called_by INTEGER REFERENCES users(id);
+EXCEPTION WHEN duplicate_column THEN NULL;
+END $$;
+
+DO $$ BEGIN
+    ALTER TABLE queues ADD COLUMN IF NOT EXISTS doctor_name_snapshot VARCHAR(100);
+EXCEPTION WHEN duplicate_column THEN NULL;
+END $$;
+
+DO $$ BEGIN
+    ALTER TABLE queues ALTER COLUMN registration_id DROP NOT NULL;
+EXCEPTION WHEN others THEN NULL;
+END $$;
+
+DO $$ BEGIN
+    ALTER TABLE queues ALTER COLUMN patient_id DROP NOT NULL;
+EXCEPTION WHEN others THEN NULL;
+END $$;
+
+DO $$ BEGIN
+    ALTER TABLE queues ALTER COLUMN doctor_id DROP NOT NULL;
+EXCEPTION WHEN others THEN NULL;
+END $$;
+
+DO $$ BEGIN
+    ALTER TABLE queues ADD CONSTRAINT queues_status_check
+        CHECK (status IN ('MENUNGGU', 'DIPANGGIL', 'SEDANG_DIPERIKSA', 'SELESAI', 'DIBATALKAN'));
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
+
+CREATE INDEX IF NOT EXISTS idx_queues_source ON queues(queue_source);
+`
+
 func initHandler() {
 	logger.Init("info")
 
@@ -30,6 +72,14 @@ func initHandler() {
 	if err != nil {
 		logger.Error.Printf("Database connection failed: %v", err)
 		db = nil
+	}
+
+	if db != nil {
+		migrator := database.NewMigrator(db, "migrations")
+		if err := migrator.Up(); err != nil {
+			logger.Info.Printf("File migration skipped (Vercel): %v", err)
+		}
+		migrator.RunBootstrapSQL(bootstrapMigration022)
 	}
 
 	srv := server.New(cfg, db)

@@ -161,6 +161,42 @@ func (m *Migrator) Up() error {
 	return nil
 }
 
+// RunBootstrapSQL menjalankan SQL langsung tanpa migrasi file.
+// Cocok untuk Vercel di mana file migrations tidak tersedia di runtime.
+func (m *Migrator) RunBootstrapSQL(sqlStmts ...string) error {
+	if err := m.ensureMigrationsTable(); err != nil {
+		return err
+	}
+
+	applied, err := m.getAppliedMigrations()
+	if err != nil {
+		return err
+	}
+
+	for i, sql := range sqlStmts {
+		version := fmt.Sprintf("bootstrap-%d", i+1)
+		if applied[version] {
+			continue
+		}
+
+		tx, err := m.db.Begin()
+		if err != nil {
+			return err
+		}
+
+		if _, err := tx.Exec(sql); err != nil {
+			tx.Rollback()
+			logger.Error.Printf("Bootstrap SQL %d failed: %v", i+1, err)
+			continue
+		}
+
+		_, _ = tx.Exec("INSERT INTO schema_migrations (version, filename) VALUES ($1, $2)", version, "bootstrap")
+		_ = tx.Commit()
+		logger.Info.Printf("Bootstrap SQL %d applied", i+1)
+	}
+	return nil
+}
+
 type MigrationStatus struct {
 	Version  string
 	Filename string

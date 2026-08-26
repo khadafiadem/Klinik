@@ -140,12 +140,16 @@ func (r *Repository) GenerateNumber(date string) (string, error) {
 }
 
 func (r *Repository) GenerateKioskNumber() (string, error) {
-	var num string
-	err := r.db.QueryRow("SELECT generate_kiosk_queue_number(CURRENT_DATE)").Scan(&num)
+	_, _ = r.db.Exec("CREATE SEQUENCE IF NOT EXISTS kiosk_queue_seq START 1")
+
+	var nextVal int
+	err := r.db.QueryRow("SELECT nextval('kiosk_queue_seq')").Scan(&nextVal)
 	if err != nil {
-		return "", fmt.Errorf("gagal generate nomor antrian: %w", err)
+		var count int
+		_ = r.db.QueryRow("SELECT COUNT(*) FROM queues WHERE queue_date = CURRENT_DATE AND queue_source = 'KIOSK'").Scan(&count)
+		nextVal = count + 1
 	}
-	return num, nil
+	return fmt.Sprintf("A-%03d", nextVal), nil
 }
 
 func (r *Repository) GetTodayStats() (waiting, inProgress, completed int, err error) {
