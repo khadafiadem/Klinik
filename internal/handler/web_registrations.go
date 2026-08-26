@@ -22,11 +22,13 @@ func (h *WebHandler) RegistrationsList(w http.ResponseWriter, r *http.Request, u
 func (h *WebHandler) RegistrationForm(w http.ResponseWriter, r *http.Request, user *auth.User) {
 	doctorsList, _, _ := h.doctorSvc.GetAll(1, 100, "")
 	patientsList, _, _ := h.patientSvc.GetAll(1, 1000, "")
+	kioskQueues, _ := h.queueSvc.GetKioskQueuesToday()
 	RenderTemplate(w, r, "registrations/form", TemplateData{
 		User:  user,
 		Data: map[string]interface{}{
-			"Doctors":  doctorsList,
-			"Patients": patientsList,
+			"Doctors":    doctorsList,
+			"Patients":   patientsList,
+			"KioskQueues": kioskQueues,
 		},
 	})
 }
@@ -47,16 +49,26 @@ func (h *WebHandler) RegistrationSave(w http.ResponseWriter, r *http.Request, us
 	if err := h.regSvc.Create(reg); err != nil {
 		doctorsList, _, _ := h.doctorSvc.GetAll(1, 100, "")
 		patientsList, _, _ := h.patientSvc.GetAll(1, 1000, "")
+		kioskQueues, _ := h.queueSvc.GetKioskQueuesToday()
 		RenderTemplate(w, r, "registrations/form", TemplateData{
 			User:  user,
 			Error: err.Error(),
 			Data: map[string]interface{}{
-				"Doctors":  doctorsList,
-				"Patients": patientsList,
-				"Form":     reg,
+				"Doctors":    doctorsList,
+				"Patients":   patientsList,
+				"KioskQueues": kioskQueues,
+				"Form":       reg,
 			},
 		})
 		return
+	}
+
+	queueIDStr := r.FormValue("queue_id")
+	if queueIDStr != "" {
+		queueID, _ := strconv.Atoi(queueIDStr)
+		if queueID > 0 {
+			_ = h.queueSvc.LinkToRegistration(queueID, reg.ID, patientID, doctorID)
+		}
 	}
 
 	http.Redirect(w, r, "/registrations", http.StatusSeeOther)

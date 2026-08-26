@@ -39,6 +39,18 @@
     </div>
 </div>
 
+<!-- Quick Links -->
+<div style="display:flex;gap:10px;margin-bottom:24px;">
+    <a href="/antrian/kiosk" target="_blank" class="btn btn-accent">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+        Buka Kiosk Antrian
+    </a>
+    <a href="/antrian/display" target="_blank" class="btn btn-info">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+        Buka Monitor Antrian (TV)
+    </a>
+</div>
+
 <div class="card">
     <div class="card-header">
         <h3 class="card-title">Antrian Hari Ini</h3>
@@ -59,6 +71,7 @@
                         <th>Pasien</th>
                         <th>Dokter</th>
                         <th>No. Registrasi</th>
+                        <th>Sumber</th>
                         <th>Status</th>
                         <th>Aksi</th>
                     </tr>
@@ -68,11 +81,26 @@
                     <tr>
                         <td><span class="badge badge-primary" style="font-size:1.1em;padding:8px 16px;">{{.QueueNumber}}</span></td>
                         <td>
+                            {{if .PatientName}}
                             <strong>{{.PatientName}}</strong>
                             <br><small class="text-muted">{{.PatientMRN}}</small>
+                            {{else}}
+                            <span class="text-muted">-</span>
+                            {{end}}
                         </td>
-                        <td>{{.DoctorName}}</td>
-                        <td><span class="badge badge-info">{{.RegistrationNum}}</span></td>
+                        <td>
+                            {{if .DoctorName}}{{.DoctorName}}{{else if .DoctorNameSnapshot}}{{.DoctorNameSnapshot}}{{else}}<span class="text-muted">-</span>{{end}}
+                        </td>
+                        <td>
+                            {{if .RegistrationNum}}<span class="badge badge-info">{{.RegistrationNum}}</span>{{else}}<span class="text-muted">-</span>{{end}}
+                        </td>
+                        <td>
+                            {{if eq .QueueSource "KIOSK"}}
+                            <span class="badge badge-warning">Kiosk</span>
+                            {{else}}
+                            <span class="badge badge-secondary">Admin</span>
+                            {{end}}
+                        </td>
                         <td>
                             {{if eq .Status "MENUNGGU"}}
                             <span class="badge badge-secondary">{{.Status}}</span>
@@ -113,7 +141,7 @@
                 <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
             </div>
             <h3>Belum ada antrian</h3>
-            <p>Antrian akan muncul setelah pendaftaran pasien dibuat</p>
+            <p>Antrian akan muncul setelah pasien mengambil nomor di kiosk atau pendaftaran dibuat oleh admin</p>
         </div>
         {{end}}
     </div>

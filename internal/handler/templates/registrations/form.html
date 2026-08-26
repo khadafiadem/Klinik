@@ -24,6 +24,30 @@
         <form method="POST" action="/registrations/save">
             <div class="form-section">
                 <div class="form-section-title">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                    Nomor Antrian Kiosk
+                </div>
+
+                {{if (index .Data "KioskQueues")}}
+                <div class="form-group">
+                    <label class="form-label">Pilih Nomor Antrian dari Kiosk <small class="text-muted">(opsional - pilih jika pasien sudah mengambil nomor antrian)</small></label>
+                    <select name="queue_id" class="form-select" id="queueSelect">
+                        <option value="">-- Tidak Ada Antrian Kiosk --</option>
+                        {{range (index .Data "KioskQueues")}}
+                        <option value="{{.ID}}">{{.QueueNumber}} - Antrian Kiosk</option>
+                        {{end}}
+                    </select>
+                </div>
+                {{else}}
+                <div class="alert alert-info" style="margin-bottom:0;">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                    Tidak ada antrian kiosk yang menunggu pendaftaran saat ini.
+                </div>
+                {{end}}
+            </div>
+
+            <div class="form-section">
+                <div class="form-section-title">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
                     Data Pendaftaran
                 </div>

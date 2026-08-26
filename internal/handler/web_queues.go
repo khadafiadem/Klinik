@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"encoding/json"
 	"net/http"
 	"strconv"
 	"strings"
@@ -10,8 +11,6 @@ import (
 	"klinik-app/internal/queues"
 )
 
-// syncBPJS menjalankan sinkronisasi BPJS secara asinkron (best-effort).
-// Kegagalan tidak memengaruhi operasional klinik dan tercatat di bpjs_log.
 func (h *WebHandler) syncBPJS(fn func(s *bpjs.Service)) {
 	go func() {
 		defer func() { _ = recover() }()
@@ -72,7 +71,11 @@ func (h *WebHandler) QueueAction(w http.ResponseWriter, r *http.Request, user *a
 		return
 	}
 
-	h.queueSvc.UpdateStatus(id, status)
+	if action == "call" {
+		h.queueSvc.UpdateStatusCalledBy(id, status, user.ID)
+	} else {
+		h.queueSvc.UpdateStatus(id, status)
+	}
 
 	switch {
 	case bpjsStatus > 0:
@@ -91,9 +94,9 @@ func (h *WebHandler) QueueAdd(w http.ResponseWriter, r *http.Request, user *auth
 	doctorID, _ := strconv.Atoi(r.FormValue("doctor_id"))
 
 	q := &queues.Queue{
-		RegistrationID: registrationID,
-		PatientID:      patientID,
-		DoctorID:       doctorID,
+		RegistrationID: &registrationID,
+		PatientID:      &patientID,
+		DoctorID:       &doctorID,
 	}
 
 	if err := h.queueSvc.Create(q); err != nil {
@@ -102,4 +105,108 @@ func (h *WebHandler) QueueAdd(w http.ResponseWriter, r *http.Request, user *auth
 	}
 	h.syncBPJS(func(svc *bpjs.Service) { svc.OnQueueCreated(q.ID) })
 	http.Redirect(w, r, "/queues", http.StatusSeeOther)
+}
+
+// KioskPage menampilkan layar sentuh untuk pengambilan nomor antrian.
+func (h *WebHandler) KioskPage(w http.ResponseWriter, r *http.Request) {
+	clinic, _ := h.clinicSvc.Get()
+	RenderTemplate(w, r, "queues/kiosk", TemplateData{
+		Data: map[string]interface{}{
+			"Clinic": clinic,
+		},
+	})
+}
+
+// KioskTakeNumber API endpoint untuk mengambil nomor antrian dari kiosk.
+func (h *WebHandler) KioskTakeNumber(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	q, err := h.queueSvc.CreateKiosk()
+	if err != nil {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"success": false,
+			"message": "Gagal mengambil nomor antrian: " + err.Error(),
+		})
+		return
+	}
+
+	clinic, _ := h.clinicSvc.Get()
+	clinicName := "Klinik"
+	if clinic != nil {
+		clinicName = clinic.ClinicName
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]interface{}{
+		"success":    true,
+		"message":    "Nomor antrian berhasil diambil",
+		"queue":      q,
+		"clinicName": clinicName,
+	})
+}
+
+// DisplayPage menampilkan layar monitoring antrian untuk TV.
+func (h *WebHandler) DisplayPage(w http.ResponseWriter, r *http.Request) {
+	clinic, _ := h.clinicSvc.Get()
+	RenderTemplate(w, r, "queues/display", TemplateData{
+		Data: map[string]interface{}{
+			"Clinic": clinic,
+		},
+	})
+}
+
+// DisplayAPI endpoint JSON untuk auto-refresh TV display.
+func (h *WebHandler) DisplayAPI(w http.ResponseWriter, r *http.Request) {
+	date := r.URL.Query().Get("date")
+	if date == "" {
+		date = r.URL.Query().Get("d")
+	}
+
+	queuesList, err := h.queueSvc.GetMonitorData(date)
+	if err != nil {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"success": false,
+			"message": err.Error(),
+		})
+		return
+	}
+
+	waiting, inProgress, completed, _ := h.queueSvc.GetTodayStats()
+
+	clinic, _ := h.clinicSvc.Get()
+	clinicName := "Klinik"
+	clinicAddress := ""
+	if clinic != nil {
+		clinicName = clinic.ClinicName
+		clinicAddress = clinic.ClinicAddress
+	}
+
+	// Find currently called queue
+	var currentCalled *queues.Queue
+	for i := range queuesList {
+		if queuesList[i].Status == "DIPANGGIL" {
+			currentCalled = &queuesList[i]
+			break
+		}
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Cache-Control", "no-cache, no-store, must-revalidate")
+	json.NewEncoder(w).Encode(map[string]interface{}{
+		"success":     true,
+		"queues":      queuesList,
+		"waiting":     waiting,
+		"inProgress":  inProgress,
+		"completed":   completed,
+		"clinicName":  clinicName,
+		"clinicAddress": clinicAddress,
+		"currentCalled": currentCalled,
+	})
 }

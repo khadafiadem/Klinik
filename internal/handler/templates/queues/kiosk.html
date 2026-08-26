@@ -1,0 +1,344 @@
+{{define "title"}}Ambil Nomor Antrian{{end}}
+
+{{define "content"}}
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Ambil Nomor Antrian - {{(index .Data "Clinic").ClinicName}}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <style>
+        * { margin:0; padding:0; box-sizing:border-box; }
+        html, body { height:100%; overflow:hidden; }
+        body {
+            font-family:'Inter',sans-serif;
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #155e75 100%);
+            color:white;
+            display:flex;
+            flex-direction:column;
+            align-items:center;
+            justify-content:center;
+            min-height:100vh;
+            -webkit-user-select:none;
+            user-select:none;
+            -webkit-tap-highlight-color:transparent;
+        }
+
+        .kiosk-container {
+            text-align:center;
+            padding:40px;
+            max-width:600px;
+            width:100%;
+        }
+
+        .clinic-logo {
+            width:100px;
+            height:100px;
+            background: linear-gradient(135deg, #0891b2, #22d3ee);
+            border-radius:24px;
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            font-size:2.5rem;
+            font-weight:900;
+            color:white;
+            margin:0 auto 24px;
+            box-shadow: 0 16px 48px rgba(8,145,178,0.5);
+        }
+
+        .clinic-name {
+            font-size:1.8rem;
+            font-weight:800;
+            margin-bottom:6px;
+            letter-spacing:-0.5px;
+        }
+
+        .clinic-subtitle {
+            font-size:1rem;
+            color:rgba(255,255,255,0.5);
+            margin-bottom:40px;
+        }
+
+        .take-btn {
+            width:280px;
+            height:280px;
+            border-radius:50%;
+            border:none;
+            background: linear-gradient(135deg, #0891b2 0%, #22d3ee 100%);
+            color:white;
+            font-size:1.5rem;
+            font-weight:800;
+            cursor:pointer;
+            display:flex;
+            flex-direction:column;
+            align-items:center;
+            justify-content:center;
+            gap:12px;
+            margin:0 auto 40px;
+            box-shadow: 0 16px 60px rgba(8,145,178,0.5), inset 0 2px 0 rgba(255,255,255,0.2);
+            transition: transform 0.15s ease, box-shadow 0.15s ease;
+            position:relative;
+            overflow:hidden;
+        }
+
+        .take-btn::before {
+            content:'';
+            position:absolute;
+            top:-50%;
+            left:-50%;
+            width:200%;
+            height:200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.15) 0%, transparent 60%);
+            animation: pulse-ring 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse-ring {
+            0%,100% { transform:scale(0.8); opacity:0.5; }
+            50% { transform:scale(1.1); opacity:1; }
+        }
+
+        .take-btn:active {
+            transform:scale(0.95);
+            box-shadow: 0 8px 30px rgba(8,145,178,0.6), inset 0 2px 0 rgba(255,255,255,0.2);
+        }
+
+        .take-btn .btn-icon {
+            font-size:4rem;
+            line-height:1;
+            position:relative;
+            z-index:1;
+        }
+
+        .take-btn .btn-text {
+            font-size:1.3rem;
+            font-weight:700;
+            position:relative;
+            z-index:1;
+        }
+
+        .take-btn.processing {
+            opacity:0.7;
+            pointer-events:none;
+        }
+
+        .instructions {
+            color:rgba(255,255,255,0.4);
+            font-size:0.9rem;
+        }
+
+        /* Ticket overlay */
+        .ticket-overlay {
+            display:none;
+            position:fixed;
+            inset:0;
+            background:rgba(0,0,0,0.85);
+            z-index:100;
+            align-items:center;
+            justify-content:center;
+            backdrop-filter:blur(8px);
+        }
+
+        .ticket-overlay.show {
+            display:flex;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity:0; }
+            to { opacity:1; }
+        }
+
+        .ticket {
+            background:white;
+            border-radius:24px;
+            padding:48px 40px;
+            text-align:center;
+            max-width:420px;
+            width:90%;
+            box-shadow: 0 24px 80px rgba(0,0,0,0.3);
+            animation: slideUp 0.4s ease;
+        }
+
+        @keyframes slideUp {
+            from { transform:translateY(40px); opacity:0; }
+            to { transform:translateY(0); opacity:1; }
+        }
+
+        .ticket-header {
+            color:#0891b2;
+            font-size:0.85rem;
+            font-weight:600;
+            text-transform:uppercase;
+            letter-spacing:1px;
+            margin-bottom:8px;
+        }
+
+        .ticket-clinic {
+            color:#1e293b;
+            font-size:1.2rem;
+            font-weight:700;
+            margin-bottom:24px;
+        }
+
+        .ticket-number {
+            font-size:5rem;
+            font-weight:900;
+            color:#0891b2;
+            line-height:1;
+            margin-bottom:8px;
+            letter-spacing:-2px;
+        }
+
+        .ticket-label {
+            color:#64748b;
+            font-size:0.9rem;
+            margin-bottom:32px;
+        }
+
+        .ticket-time {
+            color:#94a3b8;
+            font-size:0.8rem;
+            margin-bottom:32px;
+        }
+
+        .ticket-close {
+            display:inline-block;
+            padding:14px 48px;
+            background: linear-gradient(135deg, #0891b2, #0e7490);
+            color:white;
+            border:none;
+            border-radius:12px;
+            font-size:1rem;
+            font-weight:700;
+            cursor:pointer;
+            transition:transform 0.15s ease;
+        }
+
+        .ticket-close:active { transform:scale(0.95); }
+
+        /* Error overlay */
+        .error-msg {
+            display:none;
+            position:fixed;
+            bottom:40px;
+            left:50%;
+            transform:translateX(-50%);
+            background:#ef4444;
+            color:white;
+            padding:16px 32px;
+            border-radius:12px;
+            font-weight:600;
+            font-size:0.9rem;
+            z-index:200;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .error-msg.show { display:block; }
+
+        .time-display {
+            position:fixed;
+            top:24px;
+            right:32px;
+            font-size:1.2rem;
+            font-weight:600;
+            color:rgba(255,255,255,0.6);
+        }
+    </style>
+</head>
+<body>
+    <div class="time-display" id="clock"></div>
+
+    <div class="kiosk-container">
+        <div class="clinic-logo">K</div>
+        <div class="clinic-name">{{(index .Data "Clinic").ClinicName}}</div>
+        <div class="clinic-subtitle">Sistem Antrian Klinik</div>
+
+        <button class="take-btn" id="takeBtn" onclick="takeNumber()">
+            <span class="btn-icon">&#128179;</span>
+            <span class="btn-text">AMBIL<br>NOMOR ANTRIAN</span>
+        </button>
+
+        <div class="instructions">Sentuh tombol di atas untuk mengambil nomor antrian</div>
+    </div>
+
+    <!-- Ticket Overlay -->
+    <div class="ticket-overlay" id="ticketOverlay">
+        <div class="ticket">
+            <div class="ticket-header">Nomor Antrian Anda</div>
+            <div class="ticket-clinic" id="ticketClinic"></div>
+            <div class="ticket-number" id="ticketNumber"></div>
+            <div class="ticket-label">Silakan tunggu dipanggil oleh petugas</div>
+            <div class="ticket-time" id="ticketTime"></div>
+            <button class="ticket-close" onclick="closeTicket()">TUTUP</button>
+        </div>
+    </div>
+
+    <!-- Error Message -->
+    <div class="error-msg" id="errorMsg"></div>
+
+    <script>
+        function updateClock() {
+            var now = new Date();
+            var h = String(now.getHours()).padStart(2,'0');
+            var m = String(now.getMinutes()).padStart(2,'0');
+            var s = String(now.getSeconds()).padStart(2,'0');
+            var days = ['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'];
+            var months = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
+            var dateStr = days[now.getDay()] + ', ' + now.getDate() + ' ' + months[now.getMonth()] + ' ' + now.getFullYear();
+            document.getElementById('clock').textContent = dateStr + '  ' + h + ':' + m + ':' + s;
+        }
+        updateClock();
+        setInterval(updateClock, 1000);
+
+        function takeNumber() {
+            var btn = document.getElementById('takeBtn');
+            if (btn.classList.contains('processing')) return;
+            btn.classList.add('processing');
+
+            fetch('/api/queue/take', {
+                method: 'POST',
+                headers: {'Content-Type':'application/json'}
+            })
+            .then(function(res) { return res.json(); })
+            .then(function(data) {
+                btn.classList.remove('processing');
+                if (data.success) {
+                    var now = new Date();
+                    var h = String(now.getHours()).padStart(2,'0');
+                    var m = String(now.getMinutes()).padStart(2,'0');
+                    document.getElementById('ticketClinic').textContent = data.clinicName || 'Klinik';
+                    document.getElementById('ticketNumber').textContent = data.queue.queue_number;
+                    document.getElementById('ticketTime').textContent = 'Diambil pada pukul ' + h + ':' + m;
+                    document.getElementById('ticketOverlay').classList.add('show');
+                } else {
+                    showError(data.message || 'Gagal mengambil nomor antrian');
+                }
+            })
+            .catch(function(err) {
+                btn.classList.remove('processing');
+                showError('Terjadi kesalahan jaringan. Silakan coba lagi.');
+            });
+        }
+
+        function closeTicket() {
+            document.getElementById('ticketOverlay').classList.remove('show');
+        }
+
+        function showError(msg) {
+            var el = document.getElementById('errorMsg');
+            el.textContent = msg;
+            el.classList.add('show');
+            setTimeout(function() { el.classList.remove('show'); }, 4000);
+        }
+
+        // Close ticket on overlay background click
+        document.getElementById('ticketOverlay').addEventListener('click', function(e) {
+            if (e.target === this) closeTicket();
+        });
+    </script>
+</body>
+</html>
+{{end}}

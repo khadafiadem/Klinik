@@ -6,6 +6,8 @@ import (
 	"time"
 )
 
+func intPtr(v int) *int { return &v }
+
 func TestQueueCreateValidation(t *testing.T) {
 	s := &Service{}
 
@@ -14,9 +16,8 @@ func TestQueueCreateValidation(t *testing.T) {
 		queue   Queue
 		wantErr string
 	}{
-		{"missing registration", Queue{PatientID: 1, DoctorID: 1}, "registrasi"},
-		{"missing patient", Queue{RegistrationID: 1, DoctorID: 1}, "pasien"},
-		{"missing doctor", Queue{RegistrationID: 1, PatientID: 1}, "dokter"},
+		{"missing patient", Queue{RegistrationID: intPtr(1), PatientID: nil, DoctorID: intPtr(1)}, "pasien"},
+		{"missing doctor", Queue{RegistrationID: intPtr(1), PatientID: intPtr(1), DoctorID: nil}, "dokter"},
 	}
 
 	for _, tt := range tests {

@@ -1,0 +1,521 @@
+{{define "title"}}Monitor Antrian{{end}}
+
+{{define "content"}}
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Monitor Antrian - {{(index .Data "Clinic").ClinicName}}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <style>
+        * { margin:0; padding:0; box-sizing:border-box; }
+        html, body { height:100%; overflow:hidden; }
+        body {
+            font-family:'Inter',sans-serif;
+            background: linear-gradient(180deg, #0f172a 0%, #1e293b 100%);
+            color:white;
+            min-height:100vh;
+        }
+
+        /* Header */
+        .display-header {
+            background: linear-gradient(135deg, #0891b2 0%, #0e7490 100%);
+            padding:20px 40px;
+            display:flex;
+            align-items:center;
+            justify-content:space-between;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+        }
+
+        .header-left {
+            display:flex;
+            align-items:center;
+            gap:20px;
+        }
+
+        .header-logo {
+            width:56px;
+            height:56px;
+            background:rgba(255,255,255,0.2);
+            border-radius:14px;
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            font-size:1.6rem;
+            font-weight:900;
+            color:white;
+        }
+
+        .header-info h1 {
+            font-size:1.4rem;
+            font-weight:800;
+            letter-spacing:-0.3px;
+        }
+
+        .header-info p {
+            font-size:0.85rem;
+            opacity:0.7;
+        }
+
+        .header-clock {
+            text-align:right;
+        }
+
+        .header-clock .time {
+            font-size:2rem;
+            font-weight:800;
+            line-height:1;
+        }
+
+        .header-clock .date {
+            font-size:0.85rem;
+            opacity:0.7;
+        }
+
+        /* Stats bar */
+        .stats-bar {
+            display:flex;
+            gap:0;
+            padding:0 40px;
+            background:rgba(255,255,255,0.03);
+            border-bottom:1px solid rgba(255,255,255,0.06);
+        }
+
+        .stat-item {
+            flex:1;
+            padding:14px 20px;
+            text-align:center;
+            border-right:1px solid rgba(255,255,255,0.06);
+        }
+
+        .stat-item:last-child { border-right:none; }
+
+        .stat-value {
+            font-size:1.8rem;
+            font-weight:900;
+            line-height:1;
+        }
+
+        .stat-label {
+            font-size:0.7rem;
+            text-transform:uppercase;
+            letter-spacing:1px;
+            opacity:0.5;
+            margin-top:4px;
+        }
+
+        .stat-item.waiting .stat-value { color:#22d3ee; }
+        .stat-item.inprogress .stat-value { color:#f59e0b; }
+        .stat-item.done .stat-value { color:#10b981; }
+
+        /* Main content */
+        .display-body {
+            display:flex;
+            height:calc(100vh - 140px);
+            overflow:hidden;
+        }
+
+        /* Current called - big number */
+        .current-section {
+            width:40%;
+            display:flex;
+            flex-direction:column;
+            align-items:center;
+            justify-content:center;
+            background: linear-gradient(180deg, rgba(8,145,178,0.1) 0%, rgba(8,145,178,0.02) 100%);
+            border-right:1px solid rgba(255,255,255,0.06);
+            padding:20px;
+        }
+
+        .current-label {
+            font-size:0.9rem;
+            text-transform:uppercase;
+            letter-spacing:2px;
+            opacity:0.5;
+            margin-bottom:16px;
+        }
+
+        .current-number {
+            font-size:10rem;
+            font-weight:900;
+            color:#22d3ee;
+            line-height:1;
+            text-shadow: 0 0 60px rgba(34,211,238,0.4);
+            animation: glow 2s ease-in-out infinite alternate;
+        }
+
+        @keyframes glow {
+            from { text-shadow: 0 0 40px rgba(34,211,238,0.3); }
+            to { text-shadow: 0 0 80px rgba(34,211,238,0.6); }
+        }
+
+        .current-doctor {
+            font-size:1.2rem;
+            font-weight:600;
+            margin-top:12px;
+            color:rgba(255,255,255,0.8);
+        }
+
+        .current-patient {
+            font-size:1rem;
+            color:rgba(255,255,255,0.5);
+            margin-top:4px;
+        }
+
+        .no-called {
+            font-size:1.5rem;
+            color:rgba(255,255,255,0.2);
+            font-weight:600;
+        }
+
+        .no-called-sub {
+            font-size:0.9rem;
+            color:rgba(255,255,255,0.15);
+            margin-top:8px;
+        }
+
+        /* Queue list */
+        .queue-list-section {
+            flex:1;
+            overflow-y:auto;
+            padding:24px 32px;
+        }
+
+        .queue-section-title {
+            font-size:0.8rem;
+            text-transform:uppercase;
+            letter-spacing:1.5px;
+            opacity:0.4;
+            margin-bottom:16px;
+            font-weight:600;
+        }
+
+        .queue-grid {
+            display:grid;
+            grid-template-columns:repeat(auto-fill, minmax(140px, 1fr));
+            gap:12px;
+            margin-bottom:32px;
+        }
+
+        .queue-card {
+            background:rgba(255,255,255,0.06);
+            border-radius:12px;
+            padding:16px;
+            text-align:center;
+            border:1px solid rgba(255,255,255,0.06);
+            transition:all 0.3s ease;
+        }
+
+        .queue-card.called {
+            background:rgba(34,211,238,0.15);
+            border-color:rgba(34,211,238,0.3);
+            animation:cardPulse 1.5s ease-in-out infinite;
+        }
+
+        @keyframes cardPulse {
+            0%,100% { box-shadow:0 0 0 0 rgba(34,211,238,0.2); }
+            50% { box-shadow:0 0 20px 4px rgba(34,211,238,0.15); }
+        }
+
+        .queue-card.inprogress {
+            background:rgba(245,158,11,0.12);
+            border-color:rgba(245,158,11,0.25);
+        }
+
+        .queue-card.done {
+            background:rgba(255,255,255,0.03);
+            border-color:rgba(255,255,255,0.04);
+            opacity:0.5;
+        }
+
+        .queue-card-number {
+            font-size:1.8rem;
+            font-weight:900;
+            margin-bottom:4px;
+        }
+
+        .queue-card.called .queue-card-number { color:#22d3ee; }
+        .queue-card.inprogress .queue-card-number { color:#f59e0b; }
+        .queue-card.done .queue-card-number { color:rgba(255,255,255,0.3); }
+
+        .queue-card-doctor {
+            font-size:0.7rem;
+            opacity:0.6;
+            white-space:nowrap;
+            overflow:hidden;
+            text-overflow:ellipsis;
+        }
+
+        .queue-card-status {
+            font-size:0.6rem;
+            text-transform:uppercase;
+            letter-spacing:0.5px;
+            margin-top:6px;
+            font-weight:700;
+        }
+
+        .queue-card.called .queue-card-status { color:#22d3ee; }
+        .queue-card.inprogress .queue-card-status { color:#f59e0b; }
+        .queue-card.done .queue-card-status { color:rgba(255,255,255,0.25); }
+
+        .empty-queue {
+            text-align:center;
+            padding:60px 20px;
+            color:rgba(255,255,255,0.15);
+        }
+
+        .empty-queue h2 {
+            font-size:1.5rem;
+            font-weight:700;
+            margin-bottom:8px;
+        }
+
+        /* Footer */
+        .display-footer {
+            position:fixed;
+            bottom:0;
+            left:0;
+            right:0;
+            padding:10px 40px;
+            text-align:center;
+            font-size:0.7rem;
+            color:rgba(255,255,255,0.15);
+            background:rgba(0,0,0,0.2);
+        }
+
+        /* Scrollbar for queue list */
+        .queue-list-section::-webkit-scrollbar { width:4px; }
+        .queue-list-section::-webkit-scrollbar-track { background:transparent; }
+        .queue-list-section::-webkit-scrollbar-thumb { background:rgba(255,255,255,0.1); border-radius:2px; }
+
+        /* Fullscreen button */
+        .fullscreen-btn {
+            position:fixed;
+            bottom:40px;
+            right:32px;
+            width:44px;
+            height:44px;
+            background:rgba(255,255,255,0.1);
+            border:1px solid rgba(255,255,255,0.1);
+            border-radius:10px;
+            color:rgba(255,255,255,0.4);
+            cursor:pointer;
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            font-size:1.1rem;
+            z-index:10;
+            transition:all 0.2s;
+        }
+        .fullscreen-btn:hover {
+            background:rgba(255,255,255,0.2);
+            color:white;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <div class="display-header">
+        <div class="header-left">
+            <div class="header-logo">K</div>
+            <div class="header-info">
+                <h1 id="clinicName">{{(index .Data "Clinic").ClinicName}}</h1>
+                <p>Monitor Antrian</p>
+            </div>
+        </div>
+        <div class="header-clock">
+            <div class="time" id="clock">--:--</div>
+            <div class="date" id="dateDisplay">-</div>
+        </div>
+    </div>
+
+    <!-- Stats -->
+    <div class="stats-bar">
+        <div class="stat-item waiting">
+            <div class="stat-value" id="statWaiting">0</div>
+            <div class="stat-label">Menunggu</div>
+        </div>
+        <div class="stat-item inprogress">
+            <div class="stat-value" id="statProgress">0</div>
+            <div class="stat-label">Sedang Diperiksa</div>
+        </div>
+        <div class="stat-item done">
+            <div class="stat-value" id="statDone">0</div>
+            <div class="stat-label">Selesai</div>
+        </div>
+    </div>
+
+    <!-- Body -->
+    <div class="display-body">
+        <!-- Current Called -->
+        <div class="current-section">
+            <div class="current-label">Sedang Dipanggil</div>
+            <div id="currentCalled">
+                <div class="no-called">-</div>
+                <div class="no-called-sub">Belum ada yang dipanggil</div>
+            </div>
+        </div>
+
+        <!-- Queue List -->
+        <div class="queue-list-section">
+            <div class="queue-section-title">Menunggu</div>
+            <div class="queue-grid" id="waitingList"></div>
+
+            <div class="queue-section-title">Sedang Diperiksa</div>
+            <div class="queue-grid" id="progressList"></div>
+
+            <div class="queue-section-title">Selesai</div>
+            <div class="queue-grid" id="doneList"></div>
+        </div>
+    </div>
+
+    <button class="fullscreen-btn" onclick="toggleFullscreen()" title="Fullscreen">&#9974;</button>
+
+    <script>
+        var currentCalledData = null;
+        var refreshInterval = 3000;
+
+        function updateClock() {
+            var now = new Date();
+            var h = String(now.getHours()).padStart(2,'0');
+            var m = String(now.getMinutes()).padStart(2,'0');
+            var s = String(now.getSeconds()).padStart(2,'0');
+            document.getElementById('clock').textContent = h + ':' + m + ':' + s;
+            var days = ['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'];
+            var months = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
+            document.getElementById('dateDisplay').textContent = days[now.getDay()] + ', ' + now.getDate() + ' ' + months[now.getMonth()] + ' ' + now.getFullYear();
+        }
+        updateClock();
+        setInterval(updateClock, 1000);
+
+        function fetchQueueData() {
+            var today = new Date().toISOString().split('T')[0];
+            fetch('/api/queue/monitor?d=' + today)
+            .then(function(r) { return r.json(); })
+            .then(function(data) {
+                if (!data.success) return;
+                document.getElementById('statWaiting').textContent = data.waiting || 0;
+                document.getElementById('statProgress').textContent = data.inProgress || 0;
+                document.getElementById('statDone').textContent = data.completed || 0;
+
+                var waiting = [];
+                var progress = [];
+                var done = [];
+                var called = null;
+
+                (data.queues || []).forEach(function(q) {
+                    switch(q.status) {
+                        case 'MENUNGGU': waiting.push(q); break;
+                        case 'DIPANGGIL': called = q; progress.push(q); break;
+                        case 'SEDANG_DIPERIKSA': progress.push(q); break;
+                        case 'SELESAI': done.push(q); break;
+                    }
+                });
+
+                // Update current called
+                updateCurrentCalled(called);
+
+                // Update lists
+                renderQueueList('waitingList', waiting, 'MENUNGGU');
+                renderQueueList('progressList', progress, 'PROGRESS');
+                renderQueueList('doneList', done, 'SELESAI');
+
+                // Play sound when new call
+                if (called && (!currentCalledData || currentCalledData.id !== called.id)) {
+                    playBeep();
+                }
+                currentCalledData = called;
+            })
+            .catch(function() {})
+            .finally(function() {
+                setTimeout(fetchQueueData, refreshInterval);
+            });
+        }
+
+        function updateCurrentCalled(q) {
+            var el = document.getElementById('currentCalled');
+            if (!q) {
+                el.innerHTML = '<div class="no-called">-</div><div class="no-called-sub">Belum ada yang dipanggil</div>';
+                return;
+            }
+            var doctor = q.doctor_name || q.doctor_name_snapshot || 'Dokter';
+            var patient = q.patient_name || 'Pasien';
+            el.innerHTML = '<div class="current-number">' + escapeHtml(q.queue_number) + '</div>' +
+                '<div class="current-doctor">' + escapeHtml(doctor) + '</div>' +
+                '<div class="current-patient">' + escapeHtml(patient) + '</div>';
+        }
+
+        function renderQueueList(containerId, queues, type) {
+            var el = document.getElementById(containerId);
+            if (queues.length === 0) {
+                if (type === 'MENUNGGU') {
+                    el.innerHTML = '<div class="empty-queue"><h2>Belum ada antrian</h2></div>';
+                } else {
+                    el.innerHTML = '';
+                }
+                return;
+            }
+            var html = '';
+            queues.forEach(function(q) {
+                var cls = 'queue-card';
+                if (q.status === 'DIPANGGIL') cls += ' called';
+                else if (q.status === 'SEDANG_DIPERIKSA') cls += ' inprogress';
+                else if (q.status === 'SELESAI') cls += ' done';
+
+                var doctor = q.doctor_name || q.doctor_name_snapshot || '';
+                var statusText = '';
+                switch(q.status) {
+                    case 'MENUNGGU': statusText = 'Menunggu'; break;
+                    case 'DIPANGGIL': statusText = 'Dipanggil'; break;
+                    case 'SEDANG_DIPERIKSA': statusText = 'Diperiksa'; break;
+                    case 'SELESAI': statusText = 'Selesai'; break;
+                }
+
+                html += '<div class="' + cls + '">' +
+                    '<div class="queue-card-number">' + escapeHtml(q.queue_number) + '</div>' +
+                    '<div class="queue-card-doctor">' + escapeHtml(doctor) + '</div>' +
+                    '<div class="queue-card-status">' + statusText + '</div>' +
+                    '</div>';
+            });
+            el.innerHTML = html;
+        }
+
+        function escapeHtml(str) {
+            if (!str) return '';
+            var div = document.createElement('div');
+            div.appendChild(document.createTextNode(str));
+            return div.innerHTML;
+        }
+
+        function playBeep() {
+            try {
+                var ctx = new (window.AudioContext || window.webkitAudioContext)();
+                var osc = ctx.createOscillator();
+                var gain = ctx.createGain();
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                osc.frequency.value = 800;
+                osc.type = 'sine';
+                gain.gain.value = 0.3;
+                osc.start();
+                gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.5);
+                osc.stop(ctx.currentTime + 0.5);
+            } catch(e) {}
+        }
+
+        function toggleFullscreen() {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen().catch(function(){});
+            } else {
+                document.exitFullscreen();
+            }
+        }
+
+        fetchQueueData();
+    </script>
+</body>
+</html>
+{{end}}
