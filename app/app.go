@@ -49,12 +49,6 @@ DO $$ BEGIN
 EXCEPTION WHEN others THEN NULL;
 END $$;
 
-DO $$ BEGIN
-    ALTER TABLE queues ADD CONSTRAINT queues_status_check
-        CHECK (status IN ('MENUNGGU', 'DIPANGGIL', 'SEDANG_DIPERIKSA', 'SELESAI', 'DIBATALKAN'));
-EXCEPTION WHEN duplicate_object THEN NULL;
-END $$;
-
 CREATE INDEX IF NOT EXISTS idx_queues_source ON queues(queue_source);
 `
 
@@ -66,6 +60,13 @@ CREATE TABLE IF NOT EXISTS queue_config (
 );
 INSERT INTO queue_config (id, paused) VALUES (1, FALSE)
     ON CONFLICT (id) DO NOTHING;
+`
+
+const bootstrapMigration024 = `
+ALTER TABLE queues DROP CONSTRAINT IF EXISTS queues_status_check;
+
+ALTER TABLE queues ADD CONSTRAINT queues_status_check
+    CHECK (status IN ('MENUNGGU', 'DIPANGGIL', 'SEDANG_DIPERIKSA', 'MENUNGGU_BAYAR', 'SELESAI', 'DIBATALKAN'));
 `
 
 func initHandler() {
@@ -91,6 +92,7 @@ func initHandler() {
 		}
 		migrator.RunBootstrapSQL(bootstrapMigration022)
 		migrator.RunBootstrapSQL(bootstrapMigration023)
+		migrator.RunBootstrapSQL(bootstrapMigration024)
 	}
 
 	srv := server.New(cfg, db)
