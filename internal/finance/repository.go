@@ -64,14 +64,14 @@ func (r *Repository) GetAllInvoices(page, limit int, search string) ([]Invoice, 
 func (r *Repository) GetInvoiceByID(id int) (*Invoice, error) {
 	inv := &Invoice{}
 	query := `SELECT inv.id, inv.invoice_number, inv.patient_id, p.full_name, p.medical_record_number,
-		inv.invoice_date, inv.subtotal, inv.discount, inv.total,
+		inv.registration_id, inv.invoice_date, inv.subtotal, inv.discount, inv.total,
 		COALESCE(inv.notes,''), inv.status, inv.created_by, inv.created_at, inv.updated_at
 		FROM invoices inv
 		JOIN patients p ON inv.patient_id = p.id
 		WHERE inv.id = $1`
 	err := r.db.QueryRow(query, id).Scan(
 		&inv.ID, &inv.InvoiceNumber, &inv.PatientID, &inv.PatientName, &inv.PatientMRN,
-		&inv.InvoiceDate, &inv.Subtotal, &inv.Discount, &inv.Total,
+		&inv.RegistrationID, &inv.InvoiceDate, &inv.Subtotal, &inv.Discount, &inv.Total,
 		&inv.Notes, &inv.Status, &inv.CreatedBy, &inv.CreatedAt, &inv.UpdatedAt,
 	)
 	if err != nil {
@@ -270,4 +270,11 @@ func (r *Repository) GetTotalPaidForInvoice(invoiceID int) (float64, error) {
 	var total float64
 	err := r.db.QueryRow(`SELECT COALESCE(SUM(amount),0) FROM payments WHERE invoice_id=$1 AND status='COMPLETED'`, invoiceID).Scan(&total)
 	return total, err
+}
+
+// IsRegistrationFullyPaid memeriksa apakah sudah ada tagihan lunas untuk suatu registrasi.
+func (r *Repository) IsRegistrationFullyPaid(regID int) (bool, error) {
+	var paid bool
+	err := r.db.QueryRow(`SELECT EXISTS(SELECT 1 FROM invoices WHERE registration_id=$1 AND status='SUDAH_BAYAR')`, regID).Scan(&paid)
+	return paid, err
 }

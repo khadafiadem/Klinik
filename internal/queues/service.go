@@ -92,10 +92,16 @@ func (s *Service) GetMonitorData(date string) ([]Queue, error) {
 	return s.repo.GetMonitorData(date)
 }
 
+// CompleteByRegistration menuntaskan antrian yang sedang menunggu pembayaran untuk
+// registrasi tertentu (dipanggil setelah tagihan lunas). Mengembalikan id antrian yang dituntaskan.
+func (s *Service) CompleteByRegistration(regID int) ([]int, error) {
+	return s.repo.CompleteByRegistration(regID)
+}
+
 func (s *Service) UpdateStatus(id int, status string) error {
 	validStatuses := map[string]bool{
 		"MENUNGGU": true, "DIPANGGIL": true, "SEDANG_DIPERIKSA": true,
-		"SELESAI": true, "DIBATALKAN": true,
+		"MENUNGGU_BAYAR": true, "SELESAI": true, "DIBATALKAN": true,
 	}
 	if !validStatuses[status] {
 		return fmt.Errorf("status tidak valid: %s", status)
@@ -106,7 +112,7 @@ func (s *Service) UpdateStatus(id int, status string) error {
 func (s *Service) UpdateStatusCalledBy(id int, status string, calledBy int) error {
 	validStatuses := map[string]bool{
 		"MENUNGGU": true, "DIPANGGIL": true, "SEDANG_DIPERIKSA": true,
-		"SELESAI": true, "DIBATALKAN": true,
+		"MENUNGGU_BAYAR": true, "SELESAI": true, "DIBATALKAN": true,
 	}
 	if !validStatuses[status] {
 		return fmt.Errorf("status tidak valid: %s", status)

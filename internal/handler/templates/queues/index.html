@@ -126,6 +126,8 @@
                             <span class="badge badge-info">{{.Status}}</span>
                             {{else if eq .Status "SEDANG_DIPERIKSA"}}
                             <span class="badge badge-warning">{{.Status}}</span>
+                            {{else if eq .Status "MENUNGGU_BAYAR"}}
+                            <span class="badge badge-primary">Menunggu Pembayaran</span>
                             {{else if eq .Status "SELESAI"}}
                             <span class="badge badge-success">{{.Status}}</span>
                             {{else}}
@@ -144,7 +146,10 @@
                                 <a href="/medical-records/new?patient_id={{.PatientID}}&amp;doctor_id={{.DoctorID}}&amp;registration_id={{.RegistrationID}}" class="btn btn-info btn-sm">Rekam Medis</a>
                                 {{end}}
                                 {{if eq .Status "SEDANG_DIPERIKSA"}}
-                                <a href="/queues/{{.ID}}/complete" class="btn btn-success btn-sm">Selesai</a>
+                                <a href="/queues/{{.ID}}/complete" class="btn btn-success btn-sm">Selesai Periksa</a>
+                                {{end}}
+                                {{if and (eq .Status "MENUNGGU_BAYAR") (hasRole $.User "ADMIN" "CASHIER")}}
+                                <a href="/invoices/new?registration_id={{.RegistrationID}}&amp;patient_id={{.PatientID}}" class="btn btn-primary btn-sm">Buat Tagihan</a>
                                 {{end}}
                                 {{if and (ne .Status "SELESAI") (ne .Status "DIBATALKAN")}}
                                 <a href="/queues/{{.ID}}/cancel" class="btn btn-danger btn-sm" onclick="return confirm('Batalkan antrian ini?')">Batal</a>

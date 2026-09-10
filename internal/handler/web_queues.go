@@ -61,7 +61,17 @@ func (h *WebHandler) QueueAction(w http.ResponseWriter, r *http.Request, user *a
 	case "start":
 		status, bpjsStatus = "SEDANG_DIPERIKSA", 2
 	case "complete":
-		status, bpjsStatus = "SELESAI", 3
+		// Gerbang pembayaran: antrian tidak boleh SELESAI sebelum tagihan kunjungan lunas.
+		q, err := h.queueSvc.GetByID(id)
+		if err == nil && q.RegistrationID != nil {
+			if paid, _ := h.finSvc.IsRegistrationFullyPaid(*q.RegistrationID); paid {
+				status, bpjsStatus = "SELESAI", 3
+			} else {
+				status = "MENUNGGU_BAYAR"
+			}
+		} else {
+			status, bpjsStatus = "SELESAI", 3
+		}
 	case "cancel":
 		status = "DIBATALKAN"
 		cancelReason = strings.TrimSpace(r.FormValue("alasan"))

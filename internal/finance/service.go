@@ -121,6 +121,11 @@ func (s *Service) InvoiceCount() (int, error) {
 	return s.repo.InvoiceCount()
 }
 
+// IsRegistrationFullyPaid memeriksa apakah tagihan kunjungan (registrasi) sudah dilunasi.
+func (s *Service) IsRegistrationFullyPaid(regID int) (bool, error) {
+	return s.repo.IsRegistrationFullyPaid(regID)
+}
+
 func (s *Service) TodayRevenue() (float64, error) {
 	return s.repo.TodayRevenue()
 }

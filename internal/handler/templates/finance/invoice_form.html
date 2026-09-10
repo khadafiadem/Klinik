@@ -1,6 +1,8 @@
 {{define "title"}}Tagihan Baru{{end}}
 
 {{define "content"}}
+{{$selPat := index .Data "SelectedPatientID"}}
+{{$selReg := index .Data "SelectedRegistrationID"}}
 <div class="page-header">
     <div>
         <h1 class="page-title">Tagihan Baru</h1>
@@ -27,7 +29,7 @@
                         <select name="patient_id" class="form-select" required>
                             <option value="">-- Pilih Pasien --</option>
                             {{range (index .Data "Patients")}}
-                            <option value="{{.ID}}">{{.FullName}} ({{.MedicalRecordNumber}})</option>
+                            <option value="{{.ID}}" {{if eq .ID $selPat}}selected{{end}}>{{.FullName}} ({{.MedicalRecordNumber}})</option>
                             {{end}}
                         </select>
                     </div>
@@ -39,7 +41,7 @@
                 <div class="form-row">
                     <div class="form-group">
                         <label class="form-label">No. Registrasi</label>
-                        <input type="number" name="registration_id" class="form-input" placeholder="ID (opsional)">
+                        <input type="number" name="registration_id" class="form-input" value="{{if $selReg}}{{$selReg}}{{end}}" placeholder="ID (opsional)">
                     </div>
                     <div class="form-group">
                         <label class="form-label">No. Rekam Medis</label>

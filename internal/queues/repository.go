@@ -271,7 +271,8 @@ func (r *Repository) GetMonitorData(date string) ([]Queue, error) {
 				WHEN 'DIPANGGIL' THEN 1
 				WHEN 'SEDANG_DIPERIKSA' THEN 2
 				WHEN 'MENUNGGU' THEN 3
-				WHEN 'SELESAI' THEN 4
+				WHEN 'MENUNGGU_BAYAR' THEN 4
+				WHEN 'SELESAI' THEN 5
 			END,
 			q.created_at ASC`
 
@@ -294,4 +295,42 @@ func (r *Repository) GetMonitorData(date string) ([]Queue, error) {
 		list = append(list, q)
 	}
 	return list, nil
+}
+
+// CompleteByRegistration menandai SELESAI semua antrian yang menunggu pembayaran
+// pada registrasi tertentu. Mengembalikan id antrian yang dituntaskan.
+func (r *Repository) CompleteByRegistration(regID int) ([]int, error) {
+	rows, err := r.db.Query(`SELECT id FROM queues WHERE registration_id=$1 AND status='MENUNGGU_BAYAR'`, regID)
+	if err != nil {
+		return nil, err
+	}
+	var ids []int
+	for rows.Next() {
+		var id int
+		if err := rows.Scan(&id); err != nil {
+			rows.Close()
+			return nil, err
+		}
+		ids = append(ids, id)
+	}
+	rows.Close()
+
+	if len(ids) == 0 {
+		return ids, nil
+	}
+
+	query := `UPDATE queues SET status='SELESAI', completed_at=NOW() WHERE id IN (`
+	args := []interface{}{}
+	for i, id := range ids {
+		if i > 0 {
+			query += ","
+		}
+		query += fmt.Sprintf("$%d", i+1)
+		args = append(args, id)
+	}
+	query += ")"
+	if _, err := r.db.Exec(query, args...); err != nil {
+		return nil, err
+	}
+	return ids, nil
 }

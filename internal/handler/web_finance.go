@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"klinik-app/internal/auth"
+	"klinik-app/internal/bpjs"
 	"klinik-app/internal/finance"
 )
 
@@ -22,10 +23,15 @@ func (h *WebHandler) InvoicesList(w http.ResponseWriter, r *http.Request, user *
 
 func (h *WebHandler) InvoiceForm(w http.ResponseWriter, r *http.Request, user *auth.User) {
 	patientsList, _, _ := h.patientSvc.GetAll(1, 1000, "")
+	patientID, _ := strconv.Atoi(r.URL.Query().Get("patient_id"))
+	regID, _ := strconv.Atoi(r.URL.Query().Get("registration_id"))
+
 	RenderTemplate(w, r, "finance/invoice_form", TemplateData{
 		User: user,
 		Data: map[string]interface{}{
-			"Patients": patientsList,
+			"Patients":               patientsList,
+			"SelectedPatientID":      patientID,
+			"SelectedRegistrationID": regID,
 		},
 	})
 }
@@ -159,6 +165,16 @@ func (h *WebHandler) PaymentSave(w http.ResponseWriter, r *http.Request, user *a
 			Data:  pay,
 		})
 		return
+	}
+
+	// Gerbang pembayaran: jika tagihan kunjungan lunas, antrian otomatis SELESAI.
+	inv, invErr := h.finSvc.GetInvoiceByID(invID)
+	if invErr == nil && inv.RegistrationID != nil {
+		completedIDs, _ := h.queueSvc.CompleteByRegistration(*inv.RegistrationID)
+		for _, id := range completedIDs {
+			qid := id
+			h.syncBPJS(func(svc *bpjs.Service) { svc.OnQueueStatusChanged(qid, 3) })
+		}
 	}
 
 	http.Redirect(w, r, fmt.Sprintf("/invoices/%d", invID), http.StatusSeeOther)

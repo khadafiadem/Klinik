@@ -39,9 +39,9 @@ func TestQueueUpdateStatusValidation(t *testing.T) {
 
 	validStatuses := map[string]bool{
 		"MENUNGGU": true, "DIPANGGIL": true, "SEDANG_DIPERIKSA": true,
-		"SELESAI": true, "DIBATALKAN": true,
+		"MENUNGGU_BAYAR": true, "SELESAI": true, "DIBATALKAN": true,
 	}
-	for _, st := range []string{"MENUNGGU", "DIPANGGIL", "SEDANG_DIPERIKSA", "SELESAI", "DIBATALKAN"} {
+	for _, st := range []string{"MENUNGGU", "DIPANGGIL", "SEDANG_DIPERIKSA", "MENUNGGU_BAYAR", "SELESAI", "DIBATALKAN"} {
 		if !validStatuses[st] {
 			t.Errorf("status %s should be recognized as valid", st)
 		}
