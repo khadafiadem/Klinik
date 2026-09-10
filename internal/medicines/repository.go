@@ -3,6 +3,7 @@ package medicines
 import (
 	"database/sql"
 	"fmt"
+	"strings"
 )
 
 type Repository struct {
@@ -14,13 +15,29 @@ func NewRepository(db *sql.DB) *Repository {
 }
 
 func (r *Repository) GetAll(page, limit int, search string) ([]Medicine, int, error) {
+	return r.getAll(page, limit, search, false)
+}
+
+// GetAvailable hanya mengembalikan obat yang masih memiliki stok (> 0).
+func (r *Repository) GetAvailable(page, limit int, search string) ([]Medicine, int, error) {
+	return r.getAll(page, limit, search, true)
+}
+
+func (r *Repository) getAll(page, limit int, search string, onlyAvailable bool) ([]Medicine, int, error) {
 	offset := (page - 1) * limit
 	args := []interface{}{}
 	where := ""
 
+	var conds []string
 	if search != "" {
-		where = `WHERE (m.medicine_code ILIKE $1 OR m.name ILIKE $1 OR m.generic_name ILIKE $1)`
+		conds = append(conds, `(m.medicine_code ILIKE $1 OR m.name ILIKE $1 OR m.generic_name ILIKE $1)`)
 		args = append(args, "%"+search+"%")
+	}
+	if onlyAvailable {
+		conds = append(conds, `m.stock > 0 AND m.is_active = true`)
+	}
+	if len(conds) > 0 {
+		where = "WHERE " + strings.Join(conds, " AND ")
 	}
 
 	countQuery := fmt.Sprintf(`SELECT COUNT(*) FROM medicines m %s`, where)

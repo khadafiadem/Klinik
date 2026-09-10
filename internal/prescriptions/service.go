@@ -84,9 +84,12 @@ func (s *Service) AddItem(pi *PrescriptionItem) error {
 	}
 
 	if pi.MedicineID != nil && *pi.MedicineID > 0 {
-		name, code, err := s.repo.MedicineInfo(*pi.MedicineID)
+		name, code, stock, err := s.repo.MedicineInfo(*pi.MedicineID)
 		if err != nil {
 			return err
+		}
+		if pi.Quantity > stock {
+			return fmt.Errorf("stok %s tidak mencukupi untuk jumlah tersebut (tersedia %d)", name, stock)
 		}
 		pi.MedicineName = name
 		pi.MedicineCode = code

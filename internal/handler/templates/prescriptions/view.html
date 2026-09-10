@@ -102,7 +102,8 @@
 
         {{if eq $rx.Status "PENDING"}}
         <div style="margin-top:16px;padding-top:16px;border-top:1px solid var(--border-color);">
-            <h4 style="margin-bottom:12px;">Tambah Obat dari Stok Apotek</h4>
+            <h4 style="margin-bottom:4px;">Tambah Obat</h4>
+            <p class="text-muted" style="margin-bottom:12px;">Hanya obat dengan stok tersedia yang dapat dipilih. Jumlah tidak boleh melebihi stok.</p>
             <form method="POST" action="/prescriptions/item/add">
                 <input type="hidden" name="prescription_id" value="{{$rx.ID}}">
                 <div class="form-row">
@@ -112,8 +113,9 @@
                         <select name="medicine_id" class="form-select" id="medicineSelect" required size="8" onchange="
                             var opt=this.options[this.selectedIndex];
                             var info=document.getElementById('stockInfo');
-                            if(opt.value){info.textContent='Stok tersedia: '+opt.dataset.stock;info.className=opt.dataset.stock>0?'text-muted':'text-danger';}
-                            else{info.textContent='';}" style="margin-top:8px;">
+                            var qty=document.getElementById('qtyInput');
+                            if(opt.value){info.textContent='Stok tersedia: '+opt.dataset.stock;var m=parseInt(opt.dataset.stock,10);qty.max=m;if(parseInt(qty.value,10)>m)qty.value=m;}
+                            else{info.textContent='';qty.removeAttribute('max');}" style="margin-top:8px;">
                             {{range (index .Data "Medicines")}}
                             <option value="{{.ID}}" data-stock="{{.Stock}}" data-text="{{.Name}} {{.MedicineCode}} {{if .GenericName}}{{.GenericName}}{{end}}">{{.Name}} ({{.MedicineCode}}){{if .GenericName}} - {{.GenericName}}{{end}} | stok: {{.Stock}}</option>
                             {{end}}
@@ -122,7 +124,7 @@
                     </div>
                     <div class="form-group">
                         <label class="form-label">Jumlah <span class="text-danger">*</span></label>
-                        <input type="number" name="quantity" class="form-input" value="1" min="1" required>
+                        <input type="number" name="quantity" id="qtyInput" class="form-input" value="1" min="1" required>
                     </div>
                 </div>
                 <div class="form-row">
@@ -152,9 +154,12 @@
             if (sel.selectedIndex >= 0) {
                 var opt = sel.options[sel.selectedIndex];
                 var info = document.getElementById('stockInfo');
+                var qty = document.getElementById('qtyInput');
                 if (opt.value && opt.style.display !== 'none') {
                     info.textContent = 'Stok tersedia: ' + opt.dataset.stock;
-                    info.className = opt.dataset.stock > 0 ? 'text-muted' : 'text-danger';
+                    var m = parseInt(opt.dataset.stock, 10);
+                    qty.max = m;
+                    if (parseInt(qty.value, 10) > m) { qty.value = m; }
                 }
             }
         }

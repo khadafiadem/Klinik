@@ -23,6 +23,17 @@ func (s *Service) GetAll(page, limit int, search string) ([]Medicine, int, error
 	return s.repo.GetAll(page, limit, search)
 }
 
+// GetAvailable mengembalikan daftar obat yang stoknya masih tersedia (> 0).
+func (s *Service) GetAvailable(page, limit int, search string) ([]Medicine, int, error) {
+	if page < 1 {
+		page = 1
+	}
+	if limit < 1 || limit > 100 {
+		limit = 20
+	}
+	return s.repo.GetAvailable(page, limit, search)
+}
+
 func (s *Service) GetByID(id int) (*Medicine, error) {
 	return s.repo.GetByID(id)
 }

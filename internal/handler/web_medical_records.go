@@ -128,7 +128,7 @@ func (h *WebHandler) MedicalRecordSave(w http.ResponseWriter, r *http.Request, u
 		Notes:           mr.Notes,
 	}
 
-	err := h.mrSvc.CreateFromInput(input)
+	saved, err := h.mrSvc.CreateFromInput(input)
 	if err != nil {
 		doctorsList, _, _ := h.doctorSvc.GetAll(1, 100, "")
 		patientsList, _, _ := h.patientSvc.GetAll(1, 1000, "")
@@ -144,7 +144,10 @@ func (h *WebHandler) MedicalRecordSave(w http.ResponseWriter, r *http.Request, u
 		return
 	}
 
-	http.Redirect(w, r, "/medical-records", http.StatusSeeOther)
+	h.auditSvc.Log(&user.ID, "CREATE", "medical_records", &saved.ID,
+		fmt.Sprintf("Rekam medis %s dibuat untuk pasien %d", saved.MedicalRecordNumber, patientID), r.RemoteAddr)
+
+	http.Redirect(w, r, fmt.Sprintf("/medical-records/%d", saved.ID), http.StatusSeeOther)
 }
 
 func (h *WebHandler) MedicalRecordView(w http.ResponseWriter, r *http.Request, user *auth.User) {

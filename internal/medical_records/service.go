@@ -85,7 +85,7 @@ type MRInput struct {
 	Notes           string
 }
 
-func (s *Service) CreateFromInput(input *MRInput) error {
+func (s *Service) CreateFromInput(input *MRInput) (*MedicalRecord, error) {
 	mr := &MedicalRecord{
 		PatientID:            input.PatientID,
 		DoctorID:             input.DoctorID,
@@ -97,7 +97,10 @@ func (s *Service) CreateFromInput(input *MRInput) error {
 		PhysicalExamination:  input.PhysicalExam,
 		Notes:                input.Notes,
 	}
-	return s.Create(mr)
+	if err := s.Create(mr); err != nil {
+		return nil, err
+	}
+	return mr, nil
 }
 
 func (s *Service) UpdateStatus(id int, status string) error {

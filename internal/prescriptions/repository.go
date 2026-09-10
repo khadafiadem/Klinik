@@ -143,13 +143,13 @@ func (r *Repository) AddItem(pi *PrescriptionItem) error {
 		pi.Quantity, pi.Dosage, pi.Frequency, pi.Duration, pi.Instructions).Scan(&pi.ID)
 }
 
-// MedicineInfo mengambil snapshot nama/kode obat aktif dari master obat.
-func (r *Repository) MedicineInfo(medicineID int) (name, code string, err error) {
-	err = r.db.QueryRow(`SELECT name, medicine_code FROM medicines WHERE id=$1 AND is_active`, medicineID).Scan(&name, &code)
+// MedicineInfo mengambil snapshot nama/kode/stok obat aktif dari master obat.
+func (r *Repository) MedicineInfo(medicineID int) (name, code string, stock int, err error) {
+	err = r.db.QueryRow(`SELECT name, medicine_code, stock FROM medicines WHERE id=$1 AND is_active`, medicineID).Scan(&name, &code, &stock)
 	if err == sql.ErrNoRows {
-		return "", "", fmt.Errorf("obat tidak ditemukan atau tidak aktif")
+		return "", "", 0, fmt.Errorf("obat tidak ditemukan atau tidak aktif")
 	}
-	return name, code, err
+	return name, code, stock, err
 }
 
 func (r *Repository) RemoveItem(id int) error {

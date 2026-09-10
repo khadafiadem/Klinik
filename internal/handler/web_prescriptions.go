@@ -63,7 +63,7 @@ func (h *WebHandler) PrescriptionView(w http.ResponseWriter, r *http.Request, us
 		return
 	}
 
-	medicinesList, _, err := h.medSvc.GetAll(1, 100, "")
+	medicinesList, _, err := h.medSvc.GetAvailable(1, 200, "")
 	if err != nil {
 		logger.Error.Printf("Gagal memuat daftar obat: %v", err)
 	}
@@ -124,7 +124,7 @@ func (h *WebHandler) prescriptionAction(w http.ResponseWriter, r *http.Request, 
 			http.Redirect(w, r, "/prescriptions", http.StatusSeeOther)
 			return
 		}
-		medicinesList, _, _ := h.medSvc.GetAll(1, 100, "")
+		medicinesList, _, _ := h.medSvc.GetAvailable(1, 200, "")
 		RenderTemplate(w, r, "prescriptions/view", TemplateData{
 			User:  user,
 			Error: err.Error(),
