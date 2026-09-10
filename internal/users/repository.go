@@ -4,6 +4,8 @@ import (
 	"database/sql"
 	"fmt"
 	"strings"
+
+	"github.com/lib/pq"
 )
 
 type Repository struct {
@@ -45,15 +47,55 @@ func (r *Repository) GetAll(page, limit int, search string) ([]User, int, error)
 	defer rows.Close()
 
 	var users []User
+	ids := []int{}
 	for rows.Next() {
 		var u User
 		if err := rows.Scan(&u.ID, &u.Username, &u.Email, &u.FullName, &u.IsActive, &u.LastLogin, &u.CreatedAt, &u.UpdatedAt); err != nil {
 			return nil, 0, fmt.Errorf("gagal scan user: %w", err)
 		}
 		users = append(users, u)
+		ids = append(ids, u.ID)
+	}
+
+	roleMap, err := r.rolesForUsers(ids)
+	if err != nil {
+		return nil, 0, err
+	}
+	for i := range users {
+		users[i].Roles = roleMap[users[i].ID]
 	}
 
 	return users, total, nil
+}
+
+func (r *Repository) rolesForUsers(ids []int) (map[int][]RoleInfo, error) {
+	result := make(map[int][]RoleInfo, len(ids))
+	if len(ids) == 0 {
+		return result, nil
+	}
+
+	query := `
+		SELECT ur.user_id, r.id, r.name
+		FROM user_roles ur
+		JOIN roles r ON r.id = ur.role_id
+		WHERE ur.user_id = ANY($1)
+		ORDER BY r.id`
+	rows, err := r.db.Query(query, pq.Array(ids))
+	if err != nil {
+		return nil, fmt.Errorf("gagal mengambil role user: %w", err)
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var userID int
+		var role RoleInfo
+		if err := rows.Scan(&userID, &role.ID, &role.Name); err != nil {
+			return nil, fmt.Errorf("gagal scan role user: %w", err)
+		}
+		result[userID] = append(result[userID], role)
+	}
+
+	return result, nil
 }
 
 func (r *Repository) GetByID(id int) (*User, error) {
