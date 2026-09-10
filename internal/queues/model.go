@@ -21,6 +21,7 @@ type Queue struct {
 	CalledAt             *time.Time `json:"called_at,omitempty"`
 	StartedAt            *time.Time `json:"started_at,omitempty"`
 	CompletedAt          *time.Time `json:"completed_at,omitempty"`
+	HasMedicalRecord     bool       `json:"has_medical_record"`
 	CreatedAt            time.Time  `json:"created_at"`
 	UpdatedAt            time.Time  `json:"updated_at"`
 }

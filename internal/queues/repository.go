@@ -20,7 +20,8 @@ func (r *Repository) GetAllByDate(date string) ([]Queue, error) {
 		q.doctor_id, COALESCE(d.full_name,''), COALESCE(q.doctor_name_snapshot,''),
 		q.queue_date, q.status, q.queue_source, q.called_by,
 		COALESCE(u.full_name,''),
-		q.called_at, q.started_at, q.completed_at, q.created_at, q.updated_at
+		q.called_at, q.started_at, q.completed_at, q.created_at, q.updated_at,
+		EXISTS(SELECT 1 FROM medical_records mr WHERE mr.registration_id = q.registration_id)
 		FROM queues q
 		LEFT JOIN registrations r ON q.registration_id = r.id
 		LEFT JOIN patients p ON q.patient_id = p.id
@@ -43,7 +44,7 @@ func (r *Repository) GetAllByDate(date string) ([]Queue, error) {
 			&q.DoctorID, &q.DoctorName, &q.DoctorNameSnapshot,
 			&q.QueueDate, &q.Status, &q.QueueSource, &q.CalledBy,
 			&q.CalledByName,
-			&q.CalledAt, &q.StartedAt, &q.CompletedAt, &q.CreatedAt, &q.UpdatedAt); err != nil {
+			&q.CalledAt, &q.StartedAt, &q.CompletedAt, &q.CreatedAt, &q.UpdatedAt, &q.HasMedicalRecord); err != nil {
 			return nil, fmt.Errorf("gagal scan antrian: %w", err)
 		}
 		list = append(list, q)
@@ -59,7 +60,8 @@ func (r *Repository) GetByID(id int) (*Queue, error) {
 		q.doctor_id, COALESCE(d.full_name,''), COALESCE(q.doctor_name_snapshot,''),
 		q.queue_date, q.status, q.queue_source, q.called_by,
 		COALESCE(u.full_name,''),
-		q.called_at, q.started_at, q.completed_at, q.created_at, q.updated_at
+		q.called_at, q.started_at, q.completed_at, q.created_at, q.updated_at,
+		EXISTS(SELECT 1 FROM medical_records mr WHERE mr.registration_id = q.registration_id)
 		FROM queues q
 		LEFT JOIN registrations r ON q.registration_id = r.id
 		LEFT JOIN patients p ON q.patient_id = p.id
@@ -72,7 +74,7 @@ func (r *Repository) GetByID(id int) (*Queue, error) {
 		&q.DoctorID, &q.DoctorName, &q.DoctorNameSnapshot,
 		&q.QueueDate, &q.Status, &q.QueueSource, &q.CalledBy,
 		&q.CalledByName,
-		&q.CalledAt, &q.StartedAt, &q.CompletedAt, &q.CreatedAt, &q.UpdatedAt,
+		&q.CalledAt, &q.StartedAt, &q.CompletedAt, &q.CreatedAt, &q.UpdatedAt, &q.HasMedicalRecord,
 	)
 	if err != nil {
 		if err == sql.ErrNoRows {
@@ -168,7 +170,8 @@ func (r *Repository) GetKioskQueuesByDate(date string) ([]Queue, error) {
 		q.patient_id, COALESCE(p.full_name,''), COALESCE(p.medical_record_number,''),
 		q.doctor_id, COALESCE(d.full_name,''), COALESCE(q.doctor_name_snapshot,''),
 		q.queue_date, q.status, q.queue_source, q.called_by, COALESCE(u.full_name,''),
-		q.called_at, q.started_at, q.completed_at, q.created_at, q.updated_at
+		q.called_at, q.started_at, q.completed_at, q.created_at, q.updated_at,
+		EXISTS(SELECT 1 FROM medical_records mr WHERE mr.registration_id = q.registration_id)
 		FROM queues q
 		LEFT JOIN registrations r ON q.registration_id = r.id
 		LEFT JOIN patients p ON q.patient_id = p.id
@@ -190,7 +193,7 @@ func (r *Repository) GetKioskQueuesByDate(date string) ([]Queue, error) {
 			&q.PatientID, &q.PatientName, &q.PatientMRN,
 			&q.DoctorID, &q.DoctorName, &q.DoctorNameSnapshot,
 			&q.QueueDate, &q.Status, &q.QueueSource, &q.CalledBy, &q.CalledByName,
-			&q.CalledAt, &q.StartedAt, &q.CompletedAt, &q.CreatedAt, &q.UpdatedAt); err != nil {
+			&q.CalledAt, &q.StartedAt, &q.CompletedAt, &q.CreatedAt, &q.UpdatedAt, &q.HasMedicalRecord); err != nil {
 			return nil, err
 		}
 		list = append(list, q)
@@ -226,7 +229,8 @@ func (r *Repository) GetNextWaiting() (*Queue, error) {
 		q.patient_id, COALESCE(p.full_name,''), COALESCE(p.medical_record_number,''),
 		q.doctor_id, COALESCE(d.full_name,''), COALESCE(q.doctor_name_snapshot,''),
 		q.queue_date, q.status, q.queue_source, q.called_by, COALESCE(u.full_name,''),
-		q.called_at, q.started_at, q.completed_at, q.created_at, q.updated_at
+		q.called_at, q.started_at, q.completed_at, q.created_at, q.updated_at,
+		EXISTS(SELECT 1 FROM medical_records mr WHERE mr.registration_id = q.registration_id)
 		FROM queues q
 		LEFT JOIN registrations r ON q.registration_id = r.id
 		LEFT JOIN patients p ON q.patient_id = p.id
@@ -245,7 +249,7 @@ func (r *Repository) GetNextWaiting() (*Queue, error) {
 		&q.PatientID, &q.PatientName, &q.PatientMRN,
 		&q.DoctorID, &q.DoctorName, &q.DoctorNameSnapshot,
 		&q.QueueDate, &q.Status, &q.QueueSource, &q.CalledBy, &q.CalledByName,
-		&q.CalledAt, &q.StartedAt, &q.CompletedAt, &q.CreatedAt, &q.UpdatedAt,
+		&q.CalledAt, &q.StartedAt, &q.CompletedAt, &q.CreatedAt, &q.UpdatedAt, &q.HasMedicalRecord,
 	)
 	if err != nil {
 		return nil, err
@@ -259,7 +263,8 @@ func (r *Repository) GetMonitorData(date string) ([]Queue, error) {
 		q.patient_id, COALESCE(p.full_name,''), COALESCE(p.medical_record_number,''),
 		q.doctor_id, COALESCE(d.full_name,''), COALESCE(q.doctor_name_snapshot,''),
 		q.queue_date, q.status, q.queue_source, q.called_by, COALESCE(u.full_name,''),
-		q.called_at, q.started_at, q.completed_at, q.created_at, q.updated_at
+		q.called_at, q.started_at, q.completed_at, q.created_at, q.updated_at,
+		EXISTS(SELECT 1 FROM medical_records mr WHERE mr.registration_id = q.registration_id)
 		FROM queues q
 		LEFT JOIN registrations r ON q.registration_id = r.id
 		LEFT JOIN patients p ON q.patient_id = p.id
@@ -289,7 +294,7 @@ func (r *Repository) GetMonitorData(date string) ([]Queue, error) {
 			&q.PatientID, &q.PatientName, &q.PatientMRN,
 			&q.DoctorID, &q.DoctorName, &q.DoctorNameSnapshot,
 			&q.QueueDate, &q.Status, &q.QueueSource, &q.CalledBy, &q.CalledByName,
-			&q.CalledAt, &q.StartedAt, &q.CompletedAt, &q.CreatedAt, &q.UpdatedAt); err != nil {
+			&q.CalledAt, &q.StartedAt, &q.CompletedAt, &q.CreatedAt, &q.UpdatedAt, &q.HasMedicalRecord); err != nil {
 			return nil, err
 		}
 		list = append(list, q)

@@ -142,7 +142,7 @@
                                 {{if eq .Status "DIPANGGIL"}}
                                 <a href="/queues/{{.ID}}/start" class="btn btn-warning btn-sm">Mulai Periksa</a>
                                 {{end}}
-                                {{if or (eq .Status "DIPANGGIL") (eq .Status "SEDANG_DIPERIKSA")}}
+                                {{if and (or (eq .Status "DIPANGGIL") (eq .Status "SEDANG_DIPERIKSA")) (not .HasMedicalRecord)}}
                                 <a href="/medical-records/new?patient_id={{.PatientID}}&amp;doctor_id={{.DoctorID}}&amp;registration_id={{.RegistrationID}}" class="btn btn-info btn-sm">Rekam Medis</a>
                                 {{end}}
                                 {{if eq .Status "SEDANG_DIPERIKSA"}}
