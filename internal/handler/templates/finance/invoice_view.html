@@ -51,7 +51,7 @@
                 <td>Rp {{printf "%.0f" .UnitPrice}}</td>
                 <td><strong>Rp {{printf "%.0f" .TotalPrice}}</strong></td>
                 <td>
-                    <form method="POST" action="/invoices/item/{{$.InvoiceID}}/{{.ID}}" style="display:inline;" onsubmit="return confirm('Hapus item ini?')">
+                    <form method="POST" action="/invoices/item/{{$.Data.ID}}/{{.ID}}" style="display:inline;" onsubmit="return confirm('Hapus item ini?')">
                         <button type="submit" class="btn btn-danger btn-sm">Hapus</button>
                     </form>
                 </td>

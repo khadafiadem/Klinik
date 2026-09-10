@@ -49,8 +49,9 @@
                             <select id="role_id" name="role_id" required {{if and .Data.Target (eq .Data.Target.Username "admin")}}disabled{{end}}>
                                 <option value="" disabled {{if not .Data.Target}}selected{{end}}>Pilih role...</option>
                                 {{range .Data.Roles}}
+                                {{$optID := .ID}}
                                 <option value="{{.ID}}"
-                                    {{if $.Data.Target}}{{range $.Data.Target.Roles}}{{if eq .ID $.ID}}selected{{end}}{{end}}{{end}}
+                                    {{if $.Data.Target}}{{range $.Data.Target.Roles}}{{if eq .ID $optID}}selected{{end}}{{end}}{{end}}
                                 >{{.Name}}</option>
                                 {{end}}
                             </select>
