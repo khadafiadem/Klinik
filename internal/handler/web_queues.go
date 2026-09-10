@@ -62,9 +62,13 @@ func (h *WebHandler) QueueAction(w http.ResponseWriter, r *http.Request, user *a
 		status, bpjsStatus = "SEDANG_DIPERIKSA", 2
 	case "complete":
 		// Gerbang pembayaran: antrian tidak boleh SELESAI sebelum tagihan kunjungan lunas.
+		// Pengecualian: pasien BPJS tidak berbayar, selesai langsung.
 		q, err := h.queueSvc.GetByID(id)
 		if err == nil && q.RegistrationID != nil {
-			if paid, _ := h.finSvc.IsRegistrationFullyPaid(*q.RegistrationID); paid {
+			reg, regErr := h.regSvc.GetByID(*q.RegistrationID)
+			if regErr == nil && strings.EqualFold(reg.RegistrationType, "BPJS") {
+				status, bpjsStatus = "SELESAI", 3
+			} else if paid, _ := h.finSvc.IsRegistrationFullyPaid(*q.RegistrationID); paid {
 				status, bpjsStatus = "SELESAI", 3
 			} else {
 				status = "MENUNGGU_BAYAR"
