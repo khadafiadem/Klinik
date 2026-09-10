@@ -6,6 +6,8 @@ import (
 	"strings"
 
 	"klinik-app/internal/auth"
+	"klinik-app/internal/bpjs"
+	"klinik-app/internal/queues"
 	"klinik-app/internal/registrations"
 )
 
@@ -68,6 +70,15 @@ func (h *WebHandler) RegistrationSave(w http.ResponseWriter, r *http.Request, us
 		queueID, _ := strconv.Atoi(queueIDStr)
 		if queueID > 0 {
 			_ = h.queueSvc.LinkToRegistration(queueID, reg.ID, patientID, doctorID)
+		}
+	} else {
+		q := &queues.Queue{
+			RegistrationID: &reg.ID,
+			PatientID:      &patientID,
+			DoctorID:       &doctorID,
+		}
+		if err := h.queueSvc.Create(q); err == nil {
+			h.syncBPJS(func(svc *bpjs.Service) { svc.OnQueueCreated(q.ID) })
 		}
 	}
 
