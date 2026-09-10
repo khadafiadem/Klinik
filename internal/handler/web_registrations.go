@@ -71,6 +71,8 @@ func (h *WebHandler) RegistrationSave(w http.ResponseWriter, r *http.Request, us
 		if queueID > 0 {
 			_ = h.queueSvc.LinkToRegistration(queueID, reg.ID, patientID, doctorID)
 		}
+	} else if kiosks, _ := h.queueSvc.GetKioskQueuesToday(); len(kiosks) > 0 {
+		_ = h.queueSvc.LinkToRegistration(kiosks[0].ID, reg.ID, patientID, doctorID)
 	} else {
 		q := &queues.Queue{
 			RegistrationID: &reg.ID,
