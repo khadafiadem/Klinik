@@ -38,7 +38,7 @@ func (s *Service) Create(q *Queue) error {
 		q.QueueDate = time.Now().Format("2006-01-02")
 	}
 
-	num, err := s.repo.GenerateNumber(q.QueueDate)
+	num, err := s.repo.GenerateNumber(q.QueueDate, *q.DoctorID)
 	if err != nil {
 		return err
 	}
@@ -74,8 +74,11 @@ func (s *Service) CreateKiosk() (*Queue, error) {
 	return q, nil
 }
 
-func (s *Service) GetKioskQueuesToday() ([]Queue, error) {
-	return s.repo.GetKioskQueuesToday()
+func (s *Service) GetKioskQueuesByDate(date string) ([]Queue, error) {
+	if date == "" {
+		date = time.Now().Format("2006-01-02")
+	}
+	return s.repo.GetKioskQueuesByDate(date)
 }
 
 func (s *Service) LinkToRegistration(queueID int, registrationID, patientID, doctorID int) error {

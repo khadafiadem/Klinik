@@ -26,8 +26,8 @@ func (r *Repository) GetAllByDate(date string) ([]Queue, error) {
 		LEFT JOIN patients p ON q.patient_id = p.id
 		LEFT JOIN doctors d ON q.doctor_id = d.id
 		LEFT JOIN users u ON q.called_by = u.id
-		WHERE q.queue_date = $1
-		ORDER BY q.queue_number ASC`
+		WHERE q.queue_date = $1 AND COALESCE(q.queue_source,'ADMIN') != 'KIOSK'
+		ORDER BY q.created_at ASC`
 
 	rows, err := r.db.Query(query, date)
 	if err != nil {
@@ -130,13 +130,13 @@ func (r *Repository) UpdateStatusCalledBy(id int, status string, calledBy int) e
 	return err
 }
 
-func (r *Repository) GenerateNumber(date string) (string, error) {
+func (r *Repository) GenerateNumber(date string, doctorID int) (string, error) {
 	var count int
-	err := r.db.QueryRow("SELECT COUNT(*) FROM queues WHERE queue_date = $1", date).Scan(&count)
+	err := r.db.QueryRow("SELECT COUNT(*) FROM queues WHERE queue_date = $1 AND doctor_id = $2", date, doctorID).Scan(&count)
 	if err != nil {
-		return "A-001", nil
+		return "1", nil
 	}
-	return fmt.Sprintf("A-%03d", count+1), nil
+	return fmt.Sprintf("%d", count+1), nil
 }
 
 func (r *Repository) GenerateKioskNumber() (string, error) {
@@ -153,16 +153,16 @@ func (r *Repository) GenerateKioskNumber() (string, error) {
 }
 
 func (r *Repository) GetTodayStats() (waiting, inProgress, completed int, err error) {
-	err = r.db.QueryRow("SELECT COUNT(*) FROM queues WHERE queue_date = CURRENT_DATE AND status = 'MENUNGGU'").Scan(&waiting)
+	err = r.db.QueryRow("SELECT COUNT(*) FROM queues WHERE queue_date = CURRENT_DATE AND COALESCE(queue_source,'ADMIN') != 'KIOSK' AND status = 'MENUNGGU'").Scan(&waiting)
 	if err != nil {
 		return
 	}
-	_ = r.db.QueryRow("SELECT COUNT(*) FROM queues WHERE queue_date = CURRENT_DATE AND status IN ('DIPANGGIL', 'SEDANG_DIPERIKSA')").Scan(&inProgress)
-	_ = r.db.QueryRow("SELECT COUNT(*) FROM queues WHERE queue_date = CURRENT_DATE AND status = 'SELESAI'").Scan(&completed)
+	_ = r.db.QueryRow("SELECT COUNT(*) FROM queues WHERE queue_date = CURRENT_DATE AND COALESCE(queue_source,'ADMIN') != 'KIOSK' AND status IN ('DIPANGGIL', 'SEDANG_DIPERIKSA')").Scan(&inProgress)
+	_ = r.db.QueryRow("SELECT COUNT(*) FROM queues WHERE queue_date = CURRENT_DATE AND COALESCE(queue_source,'ADMIN') != 'KIOSK' AND status = 'SELESAI'").Scan(&completed)
 	return
 }
 
-func (r *Repository) GetKioskQueuesToday() ([]Queue, error) {
+func (r *Repository) GetKioskQueuesByDate(date string) ([]Queue, error) {
 	query := `SELECT q.id, q.queue_number, q.registration_id,
 		COALESCE(r.registration_number,''),
 		q.patient_id, COALESCE(p.full_name,''), COALESCE(p.medical_record_number,''),
@@ -174,10 +174,10 @@ func (r *Repository) GetKioskQueuesToday() ([]Queue, error) {
 		LEFT JOIN patients p ON q.patient_id = p.id
 		LEFT JOIN doctors d ON q.doctor_id = d.id
 		LEFT JOIN users u ON q.called_by = u.id
-		WHERE q.queue_date = CURRENT_DATE AND q.queue_source = 'KIOSK' AND q.registration_id IS NULL AND q.status = 'MENUNGGU'
+		WHERE q.queue_date = $1 AND q.queue_source = 'KIOSK'
 		ORDER BY q.created_at ASC`
 
-	rows, err := r.db.Query(query)
+	rows, err := r.db.Query(query, date)
 	if err != nil {
 		return nil, err
 	}
@@ -200,7 +200,7 @@ func (r *Repository) GetKioskQueuesToday() ([]Queue, error) {
 
 func (r *Repository) LinkToRegistration(queueID int, registrationID, patientID, doctorID int) error {
 	_, err := r.db.Exec(
-		`UPDATE queues SET registration_id = $1, patient_id = $2, doctor_id = $3 WHERE id = $4`,
+		`UPDATE queues SET registration_id = $1, patient_id = $2, doctor_id = $3, status = 'SELESAI', completed_at = NOW() WHERE id = $4`,
 		registrationID, patientID, doctorID, queueID)
 	return err
 }
@@ -235,7 +235,8 @@ func (r *Repository) GetNextWaiting() (*Queue, error) {
 		WHERE q.queue_date = CURRENT_DATE
 		  AND q.status = 'MENUNGGU'
 		  AND q.registration_id IS NOT NULL
-		ORDER BY q.queue_number ASC
+		  AND COALESCE(q.queue_source,'ADMIN') != 'KIOSK'
+		ORDER BY q.created_at ASC
 		LIMIT 1`
 
 	q := &Queue{}
@@ -264,7 +265,7 @@ func (r *Repository) GetMonitorData(date string) ([]Queue, error) {
 		LEFT JOIN patients p ON q.patient_id = p.id
 		LEFT JOIN doctors d ON q.doctor_id = d.id
 		LEFT JOIN users u ON q.called_by = u.id
-		WHERE q.queue_date = $1 AND q.status != 'DIBATALKAN'
+		WHERE q.queue_date = $1 AND q.status != 'DIBATALKAN' AND COALESCE(q.queue_source,'ADMIN') != 'KIOSK'
 		ORDER BY
 			CASE q.status
 				WHEN 'DIPANGGIL' THEN 1
@@ -272,7 +273,7 @@ func (r *Repository) GetMonitorData(date string) ([]Queue, error) {
 				WHEN 'MENUNGGU' THEN 3
 				WHEN 'SELESAI' THEN 4
 			END,
-			q.queue_number ASC`
+			q.created_at ASC`
 
 	rows, err := r.db.Query(query, date)
 	if err != nil {

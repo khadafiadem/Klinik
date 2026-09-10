@@ -117,6 +117,51 @@ func (h *WebHandler) QueueAdd(w http.ResponseWriter, r *http.Request, user *auth
 	http.Redirect(w, r, "/queues", http.StatusSeeOther)
 }
 
+// KioskQueuePage menampilkan antrian pendaftaran (nomor yang diambil di kiosk).
+func (h *WebHandler) KioskQueuePage(w http.ResponseWriter, r *http.Request, user *auth.User) {
+	date := r.URL.Query().Get("date")
+	list, _ := h.queueSvc.GetKioskQueuesByDate(date)
+	waiting, inProgress, completed, _ := h.queueSvc.GetTodayStats()
+	paused, _ := h.queueSvc.IsPaused()
+
+	RenderTemplate(w, r, "queues/pendaftaran", TemplateData{
+		User: user,
+		Data: map[string]interface{}{
+			"Queues":     list,
+			"Date":       date,
+			"Waiting":    waiting,
+			"InProgress": inProgress,
+			"Completed":  completed,
+			"Paused":     paused,
+		},
+	})
+}
+
+// KioskQueueAction panggil atau batalkan nomor antrian pendaftaran (kiosk).
+func (h *WebHandler) KioskQueueAction(w http.ResponseWriter, r *http.Request, user *auth.User) {
+	path := strings.TrimPrefix(r.URL.Path, "/antrian/pendaftaran/")
+	parts := strings.SplitN(path, "/", 2)
+	if len(parts) != 2 {
+		http.Redirect(w, r, "/antrian/pendaftaran", http.StatusSeeOther)
+		return
+	}
+
+	id, err := strconv.Atoi(parts[0])
+	if err != nil {
+		http.Redirect(w, r, "/antrian/pendaftaran", http.StatusSeeOther)
+		return
+	}
+
+	switch parts[1] {
+	case "call":
+		_ = h.queueSvc.UpdateStatusCalledBy(id, "DIPANGGIL", user.ID)
+	case "cancel":
+		_ = h.queueSvc.UpdateStatus(id, "DIBATALKAN")
+	}
+
+	http.Redirect(w, r, "/antrian/pendaftaran", http.StatusSeeOther)
+}
+
 // KioskPage menampilkan layar sentuh untuk pengambilan nomor antrian.
 func (h *WebHandler) KioskPage(w http.ResponseWriter, r *http.Request) {
 	clinic, _ := h.clinicSvc.Get()

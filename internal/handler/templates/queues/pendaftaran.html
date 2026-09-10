@@ -1,0 +1,81 @@
+{{define "title"}}Antrian Pendaftaran{{end}}
+
+{{define "content"}}
+<div class="page-header">
+    <div>
+        <h1 class="page-title">Antrian Pendaftaran</h1>
+        <p class="page-subtitle">Nomor antrian kiosk yang menunggu dilayani di meja pendaftaran</p>
+    </div>
+    <div style="display:flex;gap:10px;">
+        <a href="/antrian/kiosk" target="_blank" class="btn btn-accent">Buka Kiosk</a>
+        <a href="/antrian/display" target="_blank" class="btn btn-info">Monitor TV</a>
+    </div>
+</div>
+
+<div class="stats-grid" style="grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:14px;margin-bottom:24px;">
+    <div class="stat-card"><div class="stat-label">Menunggu</div><div class="stat-value" style="color:var(--info);">{{(index .Data "Waiting")}}</div></div>
+    <div class="stat-card"><div class="stat-label">Sedang Dilayani</div><div class="stat-value" style="color:var(--warning);">{{(index .Data "InProgress")}}</div></div>
+    <div class="stat-card"><div class="stat-label">Selesai</div><div class="stat-value" style="color:var(--success);">{{(index .Data "Completed")}}</div></div>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h3 class="card-title">Antrian Kiosk</h3>
+        <div class="card-actions">
+            <form method="GET" action="/antrian/pendaftaran" style="display:flex;gap:8px;">
+                <input type="date" name="date" class="form-input" value="{{(index .Data "Date")}}">
+                <button type="submit" class="btn btn-secondary">Tampilkan</button>
+            </form>
+        </div>
+    </div>
+    <div class="card-body">
+        {{if (index .Data "Queues")}}
+        <div class="table-responsive">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>No. Antrian</th>
+                        <th>Status</th>
+                        <th>Waktu Ambil</th>
+                        <th>Aksi</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {{range (index .Data "Queues")}}
+                    <tr>
+                        <td><span class="badge badge-primary" style="font-size:1.1em;padding:8px 16px;">{{.QueueNumber}}</span></td>
+                        <td>
+                            {{if eq .Status "MENUNGGU"}}<span class="badge badge-secondary">Menunggu</span>
+                            {{else if eq .Status "DIPANGGIL"}}<span class="badge badge-info">Dipanggil</span>
+                            {{else if eq .Status "SELESAI"}}<span class="badge badge-success">Terdaftar</span>
+                            {{else}}<span class="badge badge-danger">Dibatalkan</span>{{end}}
+                        </td>
+                        <td><small class="text-muted">{{.CreatedAt.Format "15:04"}}</small></td>
+                        <td>
+                            <div class="table-actions">
+                                {{if eq .Status "MENUNGGU"}}
+                                <a href="/antrian/pendaftaran/{{.ID}}/call" class="btn btn-info btn-sm">Panggil</a>
+                                {{end}}
+                                {{if or (eq .Status "MENUNGGU") (eq .Status "DIPANGGIL")}}
+                                <a href="/registrations/new?kiosk_id={{.ID}}" class="btn btn-primary btn-sm">Daftarkan</a>
+                                <a href="/antrian/pendaftaran/{{.ID}}/cancel" class="btn btn-danger btn-sm" onclick="return confirm('Batalkan nomor antrian ini?')">Batal</a>
+                                {{end}}
+                            </div>
+                        </td>
+                    </tr>
+                    {{end}}
+                </tbody>
+            </table>
+        </div>
+        {{else}}
+        <div class="empty-state">
+            <div class="empty-state-icon">
+                <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            </div>
+            <h3>Belum ada antrian pendaftaran</h3>
+            <p>Pasien yang mengambil nomor di kiosk akan muncul di sini untuk dipanggil ke meja pendaftaran.</p>
+        </div>
+        {{end}}
+    </div>
+</div>
+{{end}}

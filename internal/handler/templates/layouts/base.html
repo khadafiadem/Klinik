@@ -40,6 +40,7 @@
                     {{if hasRole .User "ADMIN" "DOCTOR" "NURSE"}}
                     <li><a href="/registrations" class="{{if eq .ActivePage "registrations"}}active{{end}}"><span class="nav-icon">&#9998;</span> Pendaftaran</a></li>
                     <li><a href="/queues" class="{{if eq .ActivePage "queues"}}active{{end}}"><span class="nav-icon">&#9201;</span> Antrian</a></li>
+                    <li><a href="/antrian/pendaftaran" class="{{if eq .ActivePage "antrian/pendaftaran"}}active{{end}}"><span class="nav-icon">&#9998;</span> Antrian Pendaftaran</a></li>
                     {{end}}
                     {{if hasRole .User "ADMIN" "DOCTOR" "NURSE"}}<li><a href="/medical-records" class="{{if eq .ActivePage "medical-records"}}active{{end}}"><span class="nav-icon">&#9997;</span> Rekam Medis</a></li>{{end}}
                     {{if hasRole .User "ADMIN" "DOCTOR" "PHARMACIST"}}<li><a href="/prescriptions" class="{{if eq .ActivePage "prescriptions"}}active{{end}}"><span class="nav-icon">&#9998;</span> Resep Obat</a></li>{{end}}

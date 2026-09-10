@@ -24,13 +24,18 @@ func (h *WebHandler) RegistrationsList(w http.ResponseWriter, r *http.Request, u
 func (h *WebHandler) RegistrationForm(w http.ResponseWriter, r *http.Request, user *auth.User) {
 	doctorsList, _, _ := h.doctorSvc.GetAll(1, 100, "")
 	patientsList, _, _ := h.patientSvc.GetAll(1, 1000, "")
-	kioskQueues, _ := h.queueSvc.GetKioskQueuesToday()
+	kioskID, _ := strconv.Atoi(r.URL.Query().Get("kiosk_id"))
+	var kioskQueue *queues.Queue
+	if kioskID > 0 {
+		kioskQueue, _ = h.queueSvc.GetByID(kioskID)
+	}
 	RenderTemplate(w, r, "registrations/form", TemplateData{
-		User:  user,
+		User: user,
 		Data: map[string]interface{}{
 			"Doctors":    doctorsList,
 			"Patients":   patientsList,
-			"KioskQueues": kioskQueues,
+			"KioskID":    kioskID,
+			"KioskQueue": kioskQueue,
 		},
 	})
 }
@@ -51,37 +56,37 @@ func (h *WebHandler) RegistrationSave(w http.ResponseWriter, r *http.Request, us
 	if err := h.regSvc.Create(reg); err != nil {
 		doctorsList, _, _ := h.doctorSvc.GetAll(1, 100, "")
 		patientsList, _, _ := h.patientSvc.GetAll(1, 1000, "")
-		kioskQueues, _ := h.queueSvc.GetKioskQueuesToday()
+		kioskID, _ := strconv.Atoi(r.FormValue("kiosk_id"))
+		var kioskQueue *queues.Queue
+		if kioskID > 0 {
+			kioskQueue, _ = h.queueSvc.GetByID(kioskID)
+		}
 		RenderTemplate(w, r, "registrations/form", TemplateData{
 			User:  user,
 			Error: err.Error(),
 			Data: map[string]interface{}{
 				"Doctors":    doctorsList,
 				"Patients":   patientsList,
-				"KioskQueues": kioskQueues,
+				"KioskID":    kioskID,
+				"KioskQueue": kioskQueue,
 				"Form":       reg,
 			},
 		})
 		return
 	}
 
-	queueIDStr := r.FormValue("queue_id")
-	if queueIDStr != "" {
-		queueID, _ := strconv.Atoi(queueIDStr)
-		if queueID > 0 {
-			_ = h.queueSvc.LinkToRegistration(queueID, reg.ID, patientID, doctorID)
-		}
-	} else if kiosks, _ := h.queueSvc.GetKioskQueuesToday(); len(kiosks) > 0 {
-		_ = h.queueSvc.LinkToRegistration(kiosks[0].ID, reg.ID, patientID, doctorID)
-	} else {
-		q := &queues.Queue{
-			RegistrationID: &reg.ID,
-			PatientID:      &patientID,
-			DoctorID:       &doctorID,
-		}
-		if err := h.queueSvc.Create(q); err == nil {
-			h.syncBPJS(func(svc *bpjs.Service) { svc.OnQueueCreated(q.ID) })
-		}
+	kioskID, _ := strconv.Atoi(r.FormValue("kiosk_id"))
+	if kioskID > 0 {
+		_ = h.queueSvc.LinkToRegistration(kioskID, reg.ID, patientID, doctorID)
+	}
+
+	q := &queues.Queue{
+		RegistrationID: &reg.ID,
+		PatientID:      &patientID,
+		DoctorID:       &doctorID,
+	}
+	if err := h.queueSvc.Create(q); err == nil {
+		h.syncBPJS(func(svc *bpjs.Service) { svc.OnQueueCreated(q.ID) })
 	}
 
 	http.Redirect(w, r, "/registrations", http.StatusSeeOther)
