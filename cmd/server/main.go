@@ -28,6 +28,13 @@ func main() {
 		logger.Info.Println("Server running WITHOUT database. Some features will not work.")
 	} else {
 		defer database.Close(db)
+		migrator := database.NewMigrator(db, "migrations")
+		if err := migrator.Up(); err != nil {
+			logger.Error.Printf("Database migration failed: %v", err)
+			logger.Info.Println("Server tetap berjalan, namun struktur database mungkin belum sesuai.")
+		} else {
+			logger.Info.Println("Database migrations applied.")
+		}
 	}
 
 	srv := server.New(cfg, db)

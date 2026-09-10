@@ -8,6 +8,7 @@ import (
 
 	"klinik-app/internal/auth"
 	"klinik-app/internal/bpjs"
+	"klinik-app/internal/logger"
 	"klinik-app/internal/queues"
 )
 
@@ -24,6 +25,11 @@ func (h *WebHandler) QueuesPage(w http.ResponseWriter, r *http.Request, user *au
 	waiting, inProgress, completed, _ := h.queueSvc.GetTodayStats()
 	paused, _ := h.queueSvc.IsPaused()
 
+	errMsg := ""
+	if r.URL.Query().Get("err") == "status" {
+		errMsg = "Gagal mengubah status antrian. Silakan coba lagi."
+	}
+
 	RenderTemplate(w, r, "queues/index", TemplateData{
 		User:  user,
 		Data: map[string]interface{}{
@@ -33,6 +39,7 @@ func (h *WebHandler) QueuesPage(w http.ResponseWriter, r *http.Request, user *au
 			"InProgress": inProgress,
 			"Completed":  completed,
 			"Paused":     paused,
+			"ErrMsg":     errMsg,
 		},
 	})
 }
@@ -87,10 +94,16 @@ func (h *WebHandler) QueueAction(w http.ResponseWriter, r *http.Request, user *a
 		return
 	}
 
+	var updErr error
 	if action == "call" {
-		h.queueSvc.UpdateStatusCalledBy(id, status, user.ID)
+		updErr = h.queueSvc.UpdateStatusCalledBy(id, status, user.ID)
 	} else {
-		h.queueSvc.UpdateStatus(id, status)
+		updErr = h.queueSvc.UpdateStatus(id, status)
+	}
+	if updErr != nil {
+		logger.Error.Printf("Gagal mengubah status antrian %d ke %q: %v", id, status, updErr)
+		http.Redirect(w, r, "/queues?err=status", http.StatusSeeOther)
+		return
 	}
 
 	// Auto-call next waiting patient after starting examination

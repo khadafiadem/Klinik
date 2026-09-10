@@ -8,6 +8,10 @@
     </div>
 </div>
 
+{{if (index .Data "ErrMsg")}}
+<div class="alert alert-error" role="alert">{{(index .Data "ErrMsg")}}</div>
+{{end}}
+
 <!-- Queue Stats -->
 <div class="stat-grid" style="margin-bottom:24px;">
     <div class="stat-card stat-info">
