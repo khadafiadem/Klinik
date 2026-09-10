@@ -39,6 +39,11 @@ func (h *WebHandler) PrescriptionsList(w http.ResponseWriter, r *http.Request, u
 }
 
 func (h *WebHandler) PrescriptionView(w http.ResponseWriter, r *http.Request, user *auth.User) {
+	if !HasAnyRole(user, "ADMIN", "DOCTOR", "PHARMACIST") {
+		RenderForbidden(w, r, user)
+		return
+	}
+
 	path := strings.TrimPrefix(r.URL.Path, "/prescriptions/")
 	parts := strings.SplitN(path, "/", 2)
 
@@ -140,6 +145,11 @@ func (h *WebHandler) prescriptionAction(w http.ResponseWriter, r *http.Request, 
 }
 
 func (h *WebHandler) PrescriptionAddItem(w http.ResponseWriter, r *http.Request, user *auth.User) {
+	if !HasAnyRole(user, "ADMIN", "DOCTOR", "PHARMACIST") {
+		RenderForbidden(w, r, user)
+		return
+	}
+
 	rxID, _ := strconv.Atoi(r.FormValue("prescription_id"))
 	qty, _ := strconv.Atoi(r.FormValue("quantity"))
 	var medID *int
@@ -166,6 +176,11 @@ func (h *WebHandler) PrescriptionAddItem(w http.ResponseWriter, r *http.Request,
 }
 
 func (h *WebHandler) PrescriptionRemoveItem(w http.ResponseWriter, r *http.Request, user *auth.User) {
+	if !HasAnyRole(user, "ADMIN", "DOCTOR", "PHARMACIST") {
+		RenderForbidden(w, r, user)
+		return
+	}
+
 	path := strings.TrimPrefix(r.URL.Path, "/prescriptions/item/")
 	parts := strings.SplitN(path, "/", 2)
 	rxID, _ := strconv.Atoi(parts[0])

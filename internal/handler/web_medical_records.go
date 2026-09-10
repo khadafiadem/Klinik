@@ -191,6 +191,11 @@ func (h *WebHandler) MedicalRecordView(w http.ResponseWriter, r *http.Request, u
 // MRCreatePrescription membuat resep PENDING dari rekam medis, lalu mengarahkan
 // dokter ke halaman resep untuk menambahkan obat.
 func (h *WebHandler) MRCreatePrescription(w http.ResponseWriter, r *http.Request, user *auth.User) {
+	if !HasAnyRole(user, "ADMIN", "DOCTOR") {
+		RenderForbidden(w, r, user)
+		return
+	}
+
 	mrID, _ := strconv.Atoi(r.FormValue("medical_record_id"))
 
 	mr, err := h.mrSvc.GetByID(mrID)

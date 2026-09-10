@@ -9,13 +9,13 @@
     </div>
     <div style="display:flex;gap:8px;">
         <a href="/prescriptions/{{$rx.ID}}/print" target="_blank" class="btn btn-secondary">Cetak Resep</a>
-        {{if eq $rx.Status "PENDING"}}
+        {{if and (hasRole $.User "ADMIN" "PHARMACIST") (eq $rx.Status "PENDING")}}
         <a href="/prescriptions/{{$rx.ID}}/process" class="btn btn-warning">Proses</a>
         {{end}}
-        {{if eq $rx.Status "PROCESSING"}}
+        {{if and (hasRole $.User "ADMIN" "PHARMACIST") (eq $rx.Status "PROCESSING")}}
         <a href="/prescriptions/{{$rx.ID}}/complete" class="btn btn-success" onclick="return confirm('Selesaikan resep dan kurangi stok obat?')">Serahkan Obat (Selesai)</a>
         {{end}}
-        {{if and (ne $rx.Status "COMPLETED") (ne $rx.Status "CANCELLED")}}
+        {{if and (hasRole $.User "ADMIN" "PHARMACIST") (and (ne $rx.Status "COMPLETED") (ne $rx.Status "CANCELLED"))}}
         <a href="/prescriptions/{{$rx.ID}}/cancel" class="btn btn-danger" onclick="return confirm('Batalkan resep ini?')">Batal</a>
         {{end}}
         <a href="/prescriptions" class="btn btn-secondary">Kembali</a>
@@ -66,7 +66,7 @@
                         <th>Frekuensi</th>
                         <th>Durasi</th>
                         <th>Instruksi</th>
-                        {{if eq $rx.Status "PENDING"}}<th>Aksi</th>{{end}}
+                        {{if and (hasRole $.User "ADMIN" "DOCTOR" "PHARMACIST") (eq $rx.Status "PENDING")}}<th>Aksi</th>{{end}}
                     </tr>
                 </thead>
                 <tbody>
@@ -84,7 +84,7 @@
                         <td>{{.Frequency}}</td>
                         <td>{{.Duration}}</td>
                         <td>{{.Instructions}}</td>
-                        {{if eq $rx.Status "PENDING"}}
+                        {{if and (hasRole $.User "ADMIN" "DOCTOR" "PHARMACIST") (eq $rx.Status "PENDING")}}
                         <td>
                             <form method="POST" action="/prescriptions/item/{{$rx.ID}}/{{.ID}}" style="display:inline;" onsubmit="return confirm('Hapus obat ini?')">
                                 <button type="submit" class="btn btn-danger btn-sm">Hapus</button>
@@ -100,7 +100,7 @@
         <p class="text-muted">Belum ada obat dalam resep ini</p>
         {{end}}
 
-        {{if eq $rx.Status "PENDING"}}
+        {{if and (hasRole $.User "ADMIN" "DOCTOR" "PHARMACIST") (eq $rx.Status "PENDING")}}
         <div style="margin-top:16px;padding-top:16px;border-top:1px solid var(--border-color);">
             <h4 style="margin-bottom:4px;">Tambah Obat</h4>
             <p class="text-muted" style="margin-bottom:12px;">Hanya obat dengan stok tersedia yang dapat dipilih. Jumlah tidak boleh melebihi stok.</p>
