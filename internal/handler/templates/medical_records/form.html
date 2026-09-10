@@ -1,6 +1,8 @@
 {{define "title"}}Rekam Medis Baru{{end}}
 
 {{define "content"}}
+{{$selPat := index .Data "SelectedPatientID"}}
+{{$selDoc := index .Data "SelectedDoctorID"}}
 <div class="page-header">
     <div>
         <h1 class="page-title">Rekam Medis Baru</h1>
@@ -34,7 +36,7 @@
                         <select name="patient_id" class="form-select" required>
                             <option value="">-- Pilih Pasien --</option>
                             {{range (index .Data "Patients")}}
-                            <option value="{{.ID}}">{{.FullName}} ({{.MedicalRecordNumber}})</option>
+                            <option value="{{.ID}}" {{if eq .ID $selPat}}selected{{end}}>{{.FullName}} ({{.MedicalRecordNumber}})</option>
                             {{end}}
                         </select>
                     </div>
@@ -43,7 +45,7 @@
                         <select name="doctor_id" class="form-select" required>
                             <option value="">-- Pilih Dokter --</option>
                             {{range (index .Data "Doctors")}}
-                            <option value="{{.ID}}">{{.FullName}} - {{.Specialization}}</option>
+                            <option value="{{.ID}}" {{if eq .ID $selDoc}}selected{{end}}>{{.FullName}} - {{.Specialization}}</option>
                             {{end}}
                         </select>
                     </div>
@@ -52,11 +54,12 @@
                 <div class="form-row">
                     <div class="form-group">
                         <label class="form-label">Tanggal Pemeriksaan <span class="text-danger">*</span></label>
-                        <input type="date" name="examination_date" class="form-input" value="{{now}}" required>
+                        {{$d := (index .Data "DefaultDate")}}{{if not $d}}{{$d = now}}{{end}}
+                        <input type="date" name="examination_date" class="form-input" value="{{$d}}" required>
                     </div>
                     <div class="form-group">
                         <label class="form-label">No. Registrasi</label>
-                        <input type="number" name="registration_id" class="form-input" placeholder="ID Registrasi (opsional)">
+                        <input type="number" name="registration_id" class="form-input" value="{{index .Data "SelectedRegistrationID"}}" placeholder="ID Registrasi (opsional)">
                     </div>
                 </div>
             </div>
@@ -69,7 +72,7 @@
 
                 <div class="form-group">
                     <label class="form-label">Keluhan Utama</label>
-                    <textarea name="chief_complaint" class="form-textarea" rows="2" placeholder="Keluhan utama pasien..."></textarea>
+                    <textarea name="chief_complaint" class="form-textarea" rows="2" placeholder="Keluhan utama pasien...">{{index .Data "ChiefComplaint"}}</textarea>
                 </div>
 
                 <div class="form-group">

@@ -12,26 +12,63 @@ import (
 	"klinik-app/internal/logger"
 	"klinik-app/internal/medical_records"
 	"klinik-app/internal/prescriptions"
+	"klinik-app/internal/queues"
 )
 
 func (h *WebHandler) MedicalRecordsList(w http.ResponseWriter, r *http.Request, user *auth.User) {
 	search := r.URL.Query().Get("search")
 	list, _, _ := h.mrSvc.GetAll(1, 100, search)
+
+	queuesToday, _ := h.queueSvc.GetAllByDate(time.Now().Format("2006-01-02"))
+	var current []queues.Queue
+	for _, q := range queuesToday {
+		if q.Status == "DIPANGGIL" || q.Status == "SEDANG_DIPERIKSA" {
+			current = append(current, q)
+		}
+	}
+
 	RenderTemplate(w, r, "medical_records/list", TemplateData{
 		User:   user,
 		Data:   list,
 		Search: search,
+		Data2: map[string]interface{}{
+			"Current": current,
+		},
 	})
 }
 
 func (h *WebHandler) MedicalRecordForm(w http.ResponseWriter, r *http.Request, user *auth.User) {
 	doctorsList, _, _ := h.doctorSvc.GetAll(1, 100, "")
 	patientsList, _, _ := h.patientSvc.GetAll(1, 1000, "")
+
+	patientID, _ := strconv.Atoi(r.URL.Query().Get("patient_id"))
+	doctorID, _ := strconv.Atoi(r.URL.Query().Get("doctor_id"))
+	regID, _ := strconv.Atoi(r.URL.Query().Get("registration_id"))
+
+	complaint := ""
+	examDate := time.Now().Format("2006-01-02")
+	if regID > 0 {
+		if reg, err := h.regSvc.GetByID(regID); err == nil {
+			complaint = reg.Complaint
+			if patientID == 0 {
+				patientID = reg.PatientID
+			}
+			if doctorID == 0 {
+				doctorID = reg.DoctorID
+			}
+		}
+	}
+
 	RenderTemplate(w, r, "medical_records/form", TemplateData{
 		User: user,
 		Data: map[string]interface{}{
-			"Doctors":  doctorsList,
-			"Patients": patientsList,
+			"Doctors":               doctorsList,
+			"Patients":              patientsList,
+			"SelectedPatientID":     patientID,
+			"SelectedDoctorID":      doctorID,
+			"SelectedRegistrationID": regID,
+			"ChiefComplaint":        complaint,
+			"DefaultDate":           examDate,
 		},
 	})
 }

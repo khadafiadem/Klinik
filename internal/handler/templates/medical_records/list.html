@@ -12,6 +12,32 @@
     </a>
 </div>
 
+{{if (index .Data2 "Current")}}
+<div class="card" style="border-color:var(--warning);margin-bottom:20px;">
+    <div class="card-header">
+        <h3 class="card-title" style="color:var(--warning);">Pasien Sedang Diperiksa / Dipanggil</h3>
+    </div>
+    <div class="card-body">
+        {{range (index .Data2 "Current")}}
+        <div style="display:flex;align-items:center;gap:16px;padding:12px 0;border-bottom:1px solid var(--border);flex-wrap:wrap;">
+            <span class="badge badge-primary" style="font-size:1em;padding:8px 14px;">{{.QueueNumber}}</span>
+            <div style="flex:1;min-width:180px;">
+                <strong>{{.PatientName}}</strong>
+                {{if .PatientMRN}}<br><small class="text-muted">{{.PatientMRN}}</small>{{end}}
+            </div>
+            <div style="flex:1;min-width:160px;">
+                <small class="text-muted">Dokter</small><br>{{.DoctorName}}
+            </div>
+            <div>
+                {{if eq .Status "DIPANGGIL"}}<span class="badge badge-info">Dipanggil</span>{{else}}<span class="badge badge-warning">Sedang Diperiksa</span>{{end}}
+            </div>
+            <a href="/medical-records/new?patient_id={{.PatientID}}&amp;doctor_id={{.DoctorID}}&amp;registration_id={{.RegistrationID}}" class="btn btn-primary btn-sm">Buat Rekam Medis</a>
+        </div>
+        {{end}}
+    </div>
+</div>
+{{end}}
+
 <div class="card">
     <div class="card-header">
         <h3 class="card-title">Daftar Rekam Medis</h3>
