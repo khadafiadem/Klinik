@@ -218,6 +218,26 @@ INSERT INTO letter_templates (name, code, subject, body_template) VALUES
 ON CONFLICT (code) DO NOTHING;
 `
 
+const bootstrapSatusehat = `
+CREATE TABLE IF NOT EXISTS satusehat_settings (
+    id SERIAL PRIMARY KEY,
+    environment VARCHAR(10) NOT NULL DEFAULT 'PROD',
+    base_url VARCHAR(255),
+    org_id VARCHAR(50),
+    org_name VARCHAR(200),
+    location_id VARCHAR(50),
+    client_id VARCHAR(200),
+    client_secret TEXT,
+    is_active BOOLEAN NOT NULL DEFAULT FALSE,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+INSERT INTO satusehat_settings (environment, base_url)
+SELECT 'PROD', 'https://api-satusehat.kemkes.go.id'
+WHERE NOT EXISTS (SELECT 1 FROM satusehat_settings);
+`
+
 func initHandler() {
 	logger.Init("info")
 
@@ -248,6 +268,7 @@ func initHandler() {
 			bootstrapPainAssessments,
 			bootstrapImmunizations,
 			bootstrapLetters,
+			bootstrapSatusehat,
 		)
 	}
 

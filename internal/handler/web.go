@@ -23,55 +23,58 @@ import (
 	"klinik-app/internal/queues"
 	"klinik-app/internal/registrations"
 	"klinik-app/internal/reports"
+	"klinik-app/internal/satusehat"
 	"klinik-app/internal/staff"
 	"klinik-app/internal/users"
 )
 
 type WebHandler struct {
-	authService *auth.Service
-	clinicSvc   *clinic.Service
-	doctorSvc   *doctors.Service
-	staffSvc    *staff.Service
-	patientSvc  *patients.Service
-	regSvc      *registrations.Service
-	queueSvc    *queues.Service
-	mrSvc       *medical_records.Service
-	rxSvc       *prescriptions.Service
-	medSvc      *medicines.Service
-	finSvc      *finance.Service
-	rptSvc      *reports.Service
-	auditSvc    *audit.Service
-	userSvc     *users.Service
-	bpjsSvc     *bpjs.Service
-	apptSvc     *appointments.Service
-	painSvc     *pain.Service
-	immSvc      *immunizations.Service
-	letterSvc   *letters.Service
-	rl          *middleware.RateLimiter
+	authService  *auth.Service
+	clinicSvc    *clinic.Service
+	doctorSvc    *doctors.Service
+	staffSvc     *staff.Service
+	patientSvc   *patients.Service
+	regSvc       *registrations.Service
+	queueSvc     *queues.Service
+	mrSvc        *medical_records.Service
+	rxSvc        *prescriptions.Service
+	medSvc       *medicines.Service
+	finSvc       *finance.Service
+	rptSvc       *reports.Service
+	auditSvc     *audit.Service
+	userSvc      *users.Service
+	bpjsSvc      *bpjs.Service
+	apptSvc      *appointments.Service
+	painSvc      *pain.Service
+	immSvc       *immunizations.Service
+	letterSvc    *letters.Service
+	satusehatSvc *satusehat.Service
+	rl           *middleware.RateLimiter
 }
 
 func NewWebHandler(db *sql.DB, authService *auth.Service, rl *middleware.RateLimiter) *WebHandler {
 	return &WebHandler{
-		authService: authService,
-		clinicSvc:   clinic.NewService(db),
-		doctorSvc:   doctors.NewService(db),
-		staffSvc:    staff.NewService(db),
-		patientSvc:  patients.NewService(db),
-		regSvc:      registrations.NewService(db),
-		queueSvc:    queues.NewService(db),
-		mrSvc:       medical_records.NewService(db),
-		rxSvc:       prescriptions.NewService(db),
-		medSvc:      medicines.NewService(db),
-		finSvc:      finance.NewService(db),
-		rptSvc:      reports.NewService(db),
-		auditSvc:    audit.NewService(db),
-		userSvc:     users.NewService(db),
-		bpjsSvc:     bpjs.NewService(db),
-		apptSvc:     appointments.NewService(db),
-		painSvc:     pain.NewService(db),
-		immSvc:      immunizations.NewService(db),
-		letterSvc:   letters.NewService(db),
-		rl:          rl,
+		authService:  authService,
+		clinicSvc:    clinic.NewService(db),
+		doctorSvc:    doctors.NewService(db),
+		staffSvc:     staff.NewService(db),
+		patientSvc:   patients.NewService(db),
+		regSvc:       registrations.NewService(db),
+		queueSvc:     queues.NewService(db),
+		mrSvc:        medical_records.NewService(db),
+		rxSvc:        prescriptions.NewService(db),
+		medSvc:       medicines.NewService(db),
+		finSvc:       finance.NewService(db),
+		rptSvc:       reports.NewService(db),
+		auditSvc:     audit.NewService(db),
+		userSvc:      users.NewService(db),
+		bpjsSvc:      bpjs.NewService(db),
+		apptSvc:      appointments.NewService(db),
+		painSvc:      pain.NewService(db),
+		immSvc:       immunizations.NewService(db),
+		letterSvc:    letters.NewService(db),
+		satusehatSvc: satusehat.NewService(db),
+		rl:           rl,
 	}
 }
 

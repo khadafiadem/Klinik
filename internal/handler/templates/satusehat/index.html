@@ -1,0 +1,108 @@
+{{define "title"}}Dashboard SATUSEHAT{{end}}
+
+{{define "content"}}
+{{$d := .Data}}
+<div class="page-header">
+    <div>
+        <h1 class="page-title">Dashboard SATUSEHAT</h1>
+        <p class="page-subtitle">Konfigurasi dan status integrasi SATUSEHAT</p>
+    </div>
+    <span class="badge {{$d.StatusClass}}" style="font-size:.9rem;padding:8px 14px;">{{$d.Status}}</span>
+</div>
+
+<div class="page-body">
+    {{if .Success}}<div class="alert alert-success">{{.Success}}</div>{{end}}
+    {{if .Error}}<div class="alert alert-error">{{.Error}}</div>{{end}}
+
+    <div class="stat-grid" style="margin-bottom:24px;">
+        <div class="stat-card stat-info">
+            <div class="stat-content">
+                <div class="stat-number" style="font-size:1.2em;">{{$d.Environment}}</div>
+                <div class="stat-label">Environment</div>
+            </div>
+        </div>
+        <div class="stat-card {{if $d.IsActive}}stat-success{{else}}stat-secondary{{end}}">
+            <div class="stat-content">
+                <div class="stat-number" style="font-size:1.2em;">{{if $d.IsActive}}AKTIF{{else}}NONAKTIF{{end}}</div>
+                <div class="stat-label">Status Integrasi</div>
+            </div>
+        </div>
+        <div class="stat-card stat-primary">
+            <div class="stat-content">
+                <div class="stat-number" style="font-size:1.4em;">{{$d.OrgID}}</div>
+                <div class="stat-label">Organization ID</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header">
+            <h3 class="card-title">Konfigurasi SATUSEHAT</h3>
+        </div>
+        <div class="card-body">
+            <form method="POST" action="/satusehat/save">
+                <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;">
+                    <div class="form-group">
+                        <label for="environment">Environment</label>
+                        <select id="environment" name="environment" class="form-select">
+                            <option value="PROD" {{if eq $d.Environment "PROD"}}selected{{end}}>Produksi</option>
+                            <option value="SANDBOX" {{if eq $d.Environment "SANDBOX"}}selected{{end}}>Sandbox</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="base_url">Base URL</label>
+                        <input type="text" id="base_url" name="base_url" class="form-input" value="{{$d.BaseURL}}">
+                    </div>
+                    <div class="form-group">
+                        <label for="org_id">Organization ID</label>
+                        <input type="text" id="org_id" name="org_id" class="form-input" value="{{$d.OrgID}}" placeholder="contoh: 100000123">
+                    </div>
+                    <div class="form-group">
+                        <label for="org_name">Organization Name</label>
+                        <input type="text" id="org_name" name="org_name" class="form-input" value="{{$d.OrgName}}">
+                    </div>
+                    <div class="form-group">
+                        <label for="location_id">Location ID</label>
+                        <input type="text" id="location_id" name="location_id" class="form-input" value="{{$d.LocationID}}">
+                    </div>
+                    <div class="form-group">
+                        <label for="client_id">Client ID</label>
+                        <input type="text" id="client_id" name="client_id" class="form-input" value="{{$d.ClientID}}">
+                    </div>
+                    <div class="form-group">
+                        <label for="client_secret">Client Secret</label>
+                        <input type="password" id="client_secret" name="client_secret" class="form-input" value="{{$d.ClientSecret}}" placeholder="{{if $d.HasSecret}}Client secret tersimpan (disamarkan){{else}}Kosongkan untuk biarkan tidak berubah{{end}}">
+                    </div>
+                    <div class="form-group">
+                        <label>&nbsp;</label>
+                        <label style="display:flex;align-items:center;gap:8px;font-size:.9rem;cursor:pointer;">
+                            <input type="checkbox" name="is_active" {{if $d.IsActive}}checked{{end}}> Aktifkan integrasi SATUSEHAT
+                        </label>
+                    </div>
+                </div>
+                <div style="margin-top:18px;">
+                    <button type="submit" class="btn btn-primary">&#128190; Simpan Pengaturan</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="card" style="margin-top:24px;">
+        <div class="card-header">
+            <h3 class="card-title">Catatan Integrasi</h3>
+        </div>
+        <div class="card-body" style="font-size:.9rem;line-height:1.7;">
+            <p>
+                Integrasi penuh SATUSEHAT memerlukan kredensial resmi yang didapatkan melalui
+                organisasi fasilitas kesehatan (Organization ID), aplikasi client yang terdaftar
+                di SATUSEHAT (Client ID &amp; Client Secret), serta lokasi layanan (Location ID).
+            </p>
+            <ul style="margin:12px 0 0 20px;list-style:disc;">
+                <li>Client Secret tidak ditampilkan kembali secara utuh demi keamanan.</li>
+                <li>Gunakan mode <em>Sandbox</em> terlebih dahulu sebelum perpindahan ke lingkungan Produksi.</li>
+                <li>Pastikan data pasien (NIK, tanggal lahir) sesuai sebelum dikirim ke SATUSEHAT.</li>
+            </ul>
+        </div>
+    </div>
+</div>
+{{end}}
