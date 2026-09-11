@@ -107,10 +107,12 @@ func initHandler() {
 		if err := migrator.Up(); err != nil {
 			logger.Info.Printf("File migration skipped (Vercel): %v", err)
 		}
-		migrator.RunBootstrapSQL(bootstrapMigration022)
-		migrator.RunBootstrapSQL(bootstrapMigration023)
-		migrator.RunBootstrapSQL(bootstrapMigration024)
-		migrator.RunBootstrapSQL(bootstrapInsuranceProviders)
+		migrator.RunBootstrapSQL(
+			bootstrapMigration022,
+			bootstrapMigration023,
+			bootstrapMigration024,
+			bootstrapInsuranceProviders,
+		)
 	}
 
 	srv := server.New(cfg, db)

@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"klinik-app/internal/auth"
+	"klinik-app/internal/logger"
 )
 
 func (h *WebHandler) ClinicSettings(w http.ResponseWriter, r *http.Request, user *auth.User) {
@@ -82,6 +83,7 @@ func (h *WebHandler) InsuranceProviderAdd(w http.ResponseWriter, r *http.Request
 		return
 	}
 	if err := h.clinicSvc.AddInsuranceProvider(name); err != nil {
+		logger.Error.Printf("Tambah asuransi %q gagal: %v", name, err)
 		backToSettings(w, r, "provider-fail")
 		return
 	}
@@ -102,6 +104,7 @@ func (h *WebHandler) InsuranceProviderDelete(w http.ResponseWriter, r *http.Requ
 		}
 	}
 	if err := h.clinicSvc.DeleteInsuranceProvider(id); err != nil {
+		logger.Error.Printf("Hapus asuransi id %d gagal: %v", id, err)
 		backToSettings(w, r, "provider-fail")
 		return
 	}
