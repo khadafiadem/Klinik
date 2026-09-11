@@ -75,6 +75,16 @@ func (h *WebHandler) RegistrationSave(w http.ResponseWriter, r *http.Request, us
 		return
 	}
 
+	if strings.EqualFold(reg.RegistrationType, "BPJS") {
+		if bpjsNum := strings.TrimSpace(r.FormValue("bpjs_number")); bpjsNum != "" {
+			if p, err := h.patientSvc.GetByID(patientID); err == nil {
+				p.InsuranceNumber = bpjsNum
+				p.InsuranceName = "BPJS"
+				_ = h.patientSvc.Update(patientID, p)
+			}
+		}
+	}
+
 	kioskID, _ := strconv.Atoi(r.FormValue("kiosk_id"))
 	if kioskID > 0 {
 		_ = h.queueSvc.LinkToRegistration(kioskID, reg.ID, patientID, doctorID)

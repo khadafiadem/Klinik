@@ -64,12 +64,17 @@
                     </div>
                     <div class="form-group">
                         <label class="form-label">Jenis Pendaftaran <span class="text-danger">*</span></label>
-                        <select name="registration_type" class="form-select" required>
+                        <select name="registration_type" class="form-select" id="registration_type" required>
                             <option value="UMUM">Umum</option>
                             <option value="BPJS">BPJS</option>
                             <option value="ASURANSI">Asuransi</option>
                         </select>
                     </div>
+                </div>
+
+                <div class="form-group" id="bpjs-number-group" style="display:none;">
+                    <label class="form-label">Nomor BPJS</label>
+                    <input type="text" name="bpjs_number" class="form-input" placeholder="Nomor kartu BPJS pasien">
                 </div>
 
                 <div class="form-group">
@@ -91,6 +96,20 @@
                 </button>
             </div>
         </form>
+
+        <script>
+            (function () {
+                var sel = document.getElementById('registration_type');
+                var row = document.getElementById('bpjs-number-group');
+                function toggle() {
+                    row.style.display = sel.value === 'BPJS' ? '' : 'none';
+                }
+                if (sel && row) {
+                    sel.addEventListener('change', toggle);
+                    toggle();
+                }
+            })();
+        </script>
     </div>
 </div>
 {{end}}
