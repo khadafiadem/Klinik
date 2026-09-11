@@ -151,6 +151,11 @@ func (s *Server) registerWebRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("/queues/call-next", protected(regAcc, s.wh.QueueCallNext))
 	mux.HandleFunc("/queues/", protected(regAcc, s.wh.QueueAction))
 
+	mux.HandleFunc("/appointments", protected(regAcc, s.wh.AppointmentsList))
+	mux.HandleFunc("/appointments/new", protected(regAcc, s.wh.AppointmentForm))
+	mux.HandleFunc("/appointments/save", protected(regAcc, s.wh.AppointmentSave))
+	mux.HandleFunc("/appointments/", protected(regAcc, s.wh.AppointmentAction))
+
 	mux.HandleFunc("/antrian/kiosk", s.wh.KioskPage)
 	mux.HandleFunc("/antrian/display", s.wh.DisplayPage)
 	mux.HandleFunc("/antrian/pendaftaran", protected(regAcc, s.wh.KioskQueuePage))

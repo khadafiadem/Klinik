@@ -1,0 +1,81 @@
+{{define "title"}}{{if .Data.Appt.ID}}Edit Janji Temu{{else}}Buat Janji Temu{{end}}{{end}}
+
+{{define "content"}}
+<div class="page-header">
+    <div class="page-header-left">
+        <h1>{{if .Data.Appt.ID}}Edit Janji Temu{{else}}Buat Janji Temu{{end}}</h1>
+        <span class="page-subtitle">{{if .Data.Appt.ID}}Perbarui jadwal janji temu{{else}}Buat janji temu baru untuk pasien{{end}}</span>
+    </div>
+    <div class="page-actions">
+        <a href="/appointments" class="btn btn-outline">&#8592; Kembali</a>
+    </div>
+</div>
+
+<div class="page-body">
+    {{if .Error}}
+    <div class="alert alert-error">{{.Error}}</div>
+    {{end}}
+
+    <div class="card">
+        <div class="card-body">
+            <form method="POST" action="/appointments/save">
+                {{if .Data.Appt.ID}}
+                <input type="hidden" name="id" value="{{.Data.Appt.ID}}">
+                {{end}}
+
+                <div class="form-section">
+                    <div class="form-section-title">
+                        <span class="section-icon" style="background:var(--primary-100);color:var(--primary-dark);">&#9200;</span>
+                        Informasi Janji Temu
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="patient_id">Pasien <span class="required">*</span></label>
+                            <select id="patient_id" name="patient_id" required>
+                                <option value="">-- Pilih Pasien --</option>
+                                {{range .Data.Patients}}
+                                <option value="{{.ID}}" {{if eq .ID $.Data.Appt.PatientID}}selected{{end}}>{{.FullName}} ({{.MedicalRecordNumber}})</option>
+                                {{end}}
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="doctor_id">Dokter <span class="required">*</span></label>
+                            <select id="doctor_id" name="doctor_id" required>
+                                <option value="">-- Pilih Dokter --</option>
+                                {{range .Data.Doctors}}
+                                <option value="{{.ID}}" {{if eq .ID $.Data.Appt.DoctorID}}selected{{end}}>{{.FullName}} - {{.Specialization}}</option>
+                                {{end}}
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="appointment_date">Tanggal <span class="required">*</span></label>
+                            <input type="date" id="appointment_date" name="appointment_date" class="form-input" value="{{.Data.Appt.AppointmentDate}}" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="start_time">Jam <span class="required">*</span></label>
+                            <input type="time" id="start_time" name="start_time" value="{{.Data.Appt.StartTime}}" required>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="purpose">Keluhan / Keperluan</label>
+                            <textarea id="purpose" name="purpose" rows="3" placeholder="Contoh: kontrol rutin, konsultasi hasil lab, dll">{{.Data.Appt.Purpose}}</textarea>
+                        </div>
+                        <div class="form-group">
+                            <label for="notes">Catatan</label>
+                            <textarea id="notes" name="notes" rows="3" placeholder="Catatan tambahan">{{.Data.Appt.Notes}}</textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary">&#10004; Simpan</button>
+                    <a href="/appointments" class="btn btn-outline">Batal</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{{end}}

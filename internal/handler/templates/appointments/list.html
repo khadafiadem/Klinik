@@ -1,0 +1,100 @@
+{{define "title"}}Janji Temu{{end}}
+
+{{define "content"}}
+<div class="page-header">
+    <div class="page-header-left">
+        <h1>Janji Temu</h1>
+        <span class="page-subtitle">Kelola jadwal janji temu pasien</span>
+    </div>
+    <div class="page-actions">
+        <a href="/appointments/new" class="btn btn-primary">&#10010; Buat Janji Temu</a>
+    </div>
+</div>
+
+<div class="page-body">
+    {{if .Error}}
+    <div class="alert alert-error">{{.Error}}</div>
+    {{end}}
+    {{if .Data.ErrStatus}}
+    <div class="alert alert-error">Gagal mengubah status janji temu. Silakan coba lagi.</div>
+    {{end}}
+
+    <form method="GET" action="/appointments" class="filter-bar">
+        <div class="search-container" style="flex:1;">
+            <span class="search-icon">&#128269;</span>
+            <input type="text" name="search" value="{{.Data.Search}}" placeholder="Cari pasien atau nomor janji temu...">
+        </div>
+        <input type="date" name="date" value="{{.Data.Date}}" class="form-input" style="max-width:200px;">
+        <button type="submit" class="btn btn-primary">Filter</button>
+        <a href="/appointments" class="btn btn-outline">Reset</a>
+    </form>
+
+    <div class="card">
+        <div class="card-body" style="padding:0;">
+            <div class="table-wrapper">
+                {{if .Data.Rows}}
+                <table id="appointmentsTable">
+                    <thead>
+                        <tr>
+                            <th>No. Janji</th>
+                            <th>Pasien</th>
+                            <th>RM</th>
+                            <th>Dokter</th>
+                            <th>Tanggal</th>
+                            <th>Jam</th>
+                            <th>Keluhan</th>
+                            <th>Status</th>
+                            <th>Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {{range .Data.Rows}}
+                        <tr>
+                            <td><span class="table-code">{{.AppointmentNumber}}</span></td>
+                            <td><span class="table-name">{{.PatientName}}</span></td>
+                            <td>{{.PatientMRN}}</td>
+                            <td>{{.DoctorName}}</td>
+                            <td>{{.AppointmentDate}}</td>
+                            <td>{{.StartTime}}</td>
+                            <td>{{.Purpose}}</td>
+                            <td>
+                                {{if eq .Status "TERJADWAL"}}<span class="badge badge-warning">{{.Status}}</span>
+                                {{else if eq .Status "DIKONFIRMASI"}}<span class="badge badge-primary">{{.Status}}</span>
+                                {{else if eq .Status "HADIR"}}<span class="badge badge-active">{{.Status}}</span>
+                                {{else if eq .Status "SELESAI"}}<span class="badge badge-secondary">{{.Status}}</span>
+                                {{else}}<span class="badge badge-danger">{{.Status}}</span>{{end}}
+                            </td>
+                            <td>
+                                <div class="table-actions">
+                                    <form method="POST" action="/appointments/{{.ID}}/status" style="display:inline;">
+                                        <input type="hidden" name="status" value="{{if eq .Status "TERJADWAL"}}DIKONFIRMASI{{else if eq .Status "DIKONFIRMASI"}}HADIR{{else if eq .Status "HADIR"}}SELESAI{{else}}DIBATALKAN{{end}}">
+                                        <button type="submit" class="btn btn-sm btn-primary">{{if eq .Status "TERJADWAL"}}Konfirmasi{{else if eq .Status "DIKONFIRMASI"}}Hadir{{else if eq .Status "HADIR"}}Selesai{{else}}Batalkan{{end}}</button>
+                                    </form>
+                                    {{if and (ne .Status "SELESAI") (ne .Status "DIBATALKAN")}}
+                                    <a href="/appointments/{{.ID}}/edit" class="btn btn-sm btn-outline">Edit</a>
+                                    {{end}}
+                                    {{if or (eq .Status "TERJADWAL") (eq .Status "DIBATALKAN")}}
+                                    <form method="POST" action="/appointments/{{.ID}}/status" onsubmit="return confirmDelete('janji temu ini')" style="display:inline;">
+                                        <input type="hidden" name="status" value="DIBATALKAN">
+                                        <button type="submit" class="btn btn-sm btn-danger">Batal</button>
+                                    </form>
+                                    {{end}}
+                                </div>
+                            </td>
+                        </tr>
+                        {{end}}
+                    </tbody>
+                </table>
+                {{else}}
+                <div class="empty-state">
+                    <div class="empty-state-icon">&#9200;</div>
+                    <h3>Belum Ada Janji Temu</h3>
+                    <p>Buat jadwal janji temu pasien dengan dokter.</p>
+                    <a href="/appointments/new" class="btn btn-primary">&#10010; Buat Janji Temu</a>
+                </div>
+                {{end}}
+            </div>
+        </div>
+    </div>
+</div>
+{{end}}
