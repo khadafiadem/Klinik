@@ -42,6 +42,92 @@
     </div>
 </div>
 
+<!-- Pengkajian Nyeri -->
+<div class="card" style="margin-bottom:24px;">
+    <div class="card-header">
+        <h3 class="card-title">Assesmen Pengkajian Nyeri</h3>
+        {{if .Data.HasPain}}<span class="badge badge-active">Terisi</span>{{else}}<span class="badge badge-secondary">Belum Diisi</span>{{end}}
+    </div>
+    <div class="card-body">
+        {{if .Data.ErrPain}}
+        <div class="alert alert-error">Gagal menyimpan pengkajian nyeri. Pastikan skala nyeri 0-10.</div>
+        {{end}}
+
+        {{if .Data.HasPain}}
+        {{$p := index .Data "Pain"}}
+        <table class="table" style="margin-bottom:16px;">
+            <tbody>
+                <tr><th style="width:200px;">Lokasi Nyeri</th><td>{{$p.Location}}</td></tr>
+                <tr><th>Kualitas</th><td>{{$p.Quality}}</td></tr>
+                <tr><th>Intensitas</th><td><span class="badge {{if lt $p.Intensity 4}}badge-active{{else if lt $p.Intensity 7}}badge-warning{{else}}badge-danger{{end}}">{{$p.Intensity}} / 10</span></td></tr>
+                <tr><th>Onset / Durasi</th><td>{{$p.OnsetDuration}}</td></tr>
+                <tr><th>Penjalaran</th><td>{{$p.Radiation}}</td></tr>
+                <tr><th>Yang Memperberat</th><td>{{$p.AggravatingFactors}}</td></tr>
+                <tr><th>Yang Meringankan</th><td>{{$p.RelievingFactors}}</td></tr>
+                {{if $p.Notes}}<tr><th>Catatan</th><td>{{$p.Notes}}</td></tr>{{end}}
+            </tbody>
+        </table>
+        {{end}}
+
+        {{if eq $mr.Status "DRAFT"}}
+        <form method="POST" action="/medical-records/pain/save" style="margin-top:8px;">
+            <input type="hidden" name="medical_record_id" value="{{$mr.ID}}">
+            <div class="form-row">
+                <div class="form-group">
+                    <label class="form-label">Lokasi Nyeri</label>
+                    <input type="text" name="location" class="form-input" value="{{(index .Data "Pain").Location}}" placeholder="Contoh: kepala, perut, punggung bawah">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Kualitas</label>
+                    <select name="quality" class="form-select">
+                        <option value="">-- Pilih --</option>
+                        <option value="TAJAM" {{if eq (index .Data "Pain").Quality "TAJAM"}}selected{{end}}>Tajam</option>
+                        <option value="TUMPUL" {{if eq (index .Data "Pain").Quality "TUMPUL"}}selected{{end}}>Tumpul</option>
+                        <option value="TERBAKAR" {{if eq (index .Data "Pain").Quality "TERBAKAR"}}selected{{end}}>Terbakar</option>
+                        <option value="KRAM" {{if eq (index .Data "Pain").Quality "KRAM"}}selected{{end}}>Kram / Melilit</option>
+                        <option value="BAAL" {{if eq (index .Data "Pain").Quality "BAAL"}}selected{{end}}>Baal / Menusuk</option>
+                        <option value="LAINNYA" {{if eq (index .Data "Pain").Quality "LAINNYA"}}selected{{end}}>Lainnya</option>
+                    </select>
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label class="form-label">Intensitas (0-10)</label>
+                    <input type="number" name="intensity" min="0" max="10" step="1" class="form-input" value="{{(index .Data "Pain").Intensity}}" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Onset / Durasi</label>
+                    <input type="text" name="onset_duration" class="form-input" value="{{(index .Data "Pain").OnsetDuration}}" placeholder="Contoh: sejak 3 hari, hilang timbul">
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label class="form-label">Penjalaran</label>
+                    <input type="text" name="radiation" class="form-input" value="{{(index .Data "Pain").Radiation}}" placeholder="Contoh: menjalar ke lengan kiri">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Yang Memperberat</label>
+                    <input type="text" name="aggravating_factors" class="form-input" value="{{(index .Data "Pain").AggravatingFactors}}" placeholder="Contoh: saat beraktivitas">
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label class="form-label">Yang Meringankan</label>
+                    <input type="text" name="relieving_factors" class="form-input" value="{{(index .Data "Pain").RelievingFactors}}" placeholder="Contoh: saat istirahat">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Catatan</label>
+                    <input type="text" name="notes" class="form-input" value="{{(index .Data "Pain").Notes}}" placeholder="Catatan tambahan">
+                </div>
+            </div>
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary">&#10004; {{if .Data.HasPain}}Perbarui{{else}}Simpan{{end}}</button>
+            </div>
+        </form>
+        {{end}}
+    </div>
+</div>
+
 <!-- Diagnosa -->
 <div class="card" style="margin-bottom:24px;">
     <div class="card-header">

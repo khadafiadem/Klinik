@@ -11,6 +11,7 @@ import (
 	"klinik-app/internal/auth"
 	"klinik-app/internal/logger"
 	"klinik-app/internal/medical_records"
+	"klinik-app/internal/pain"
 	"klinik-app/internal/prescriptions"
 	"klinik-app/internal/queues"
 )
@@ -62,13 +63,13 @@ func (h *WebHandler) MedicalRecordForm(w http.ResponseWriter, r *http.Request, u
 	RenderTemplate(w, r, "medical_records/form", TemplateData{
 		User: user,
 		Data: map[string]interface{}{
-			"Doctors":               doctorsList,
-			"Patients":              patientsList,
-			"SelectedPatientID":     patientID,
-			"SelectedDoctorID":      doctorID,
+			"Doctors":                doctorsList,
+			"Patients":               patientsList,
+			"SelectedPatientID":      patientID,
+			"SelectedDoctorID":       doctorID,
 			"SelectedRegistrationID": regID,
-			"ChiefComplaint":        complaint,
-			"DefaultDate":           examDate,
+			"ChiefComplaint":         complaint,
+			"DefaultDate":            examDate,
 		},
 	})
 }
@@ -83,25 +84,25 @@ func (h *WebHandler) MedicalRecordSave(w http.ResponseWriter, r *http.Request, u
 	}
 
 	vitalSigns := map[string]string{
-		"temperature": r.FormValue("temperature"),
-		"heart_rate":  r.FormValue("heart_rate"),
-		"blood_pressure": r.FormValue("blood_pressure"),
+		"temperature":      r.FormValue("temperature"),
+		"heart_rate":       r.FormValue("heart_rate"),
+		"blood_pressure":   r.FormValue("blood_pressure"),
 		"respiratory_rate": r.FormValue("respiratory_rate"),
-		"weight": r.FormValue("weight"),
-		"height": r.FormValue("height"),
+		"weight":           r.FormValue("weight"),
+		"height":           r.FormValue("height"),
 	}
 	vsJSON, _ := json.Marshal(vitalSigns)
 
 	mr := struct {
-		PatientID        int
-		DoctorID         int
-		RegistrationID   *int
-		ExaminationDate  string
-		ChiefComplaint   string
-		VitalSigns       string
-		Anamnesis        string
-		PhysicalExam     string
-		Notes            string
+		PatientID       int
+		DoctorID        int
+		RegistrationID  *int
+		ExaminationDate string
+		ChiefComplaint  string
+		VitalSigns      string
+		Anamnesis       string
+		PhysicalExam    string
+		Notes           string
 	}{
 		PatientID:       patientID,
 		DoctorID:        doctorID,
@@ -177,6 +178,11 @@ func (h *WebHandler) MedicalRecordView(w http.ResponseWriter, r *http.Request, u
 
 	diagnosesList, _ := h.mrSvc.GetAllDiagnoses()
 	treatmentsList, _ := h.mrSvc.GetAllTreatments()
+	pv, _ := h.painSvc.GetByMedicalRecordID(id)
+	hasPain := pv != nil
+	if pv == nil {
+		pv = &pain.PainAssessment{}
+	}
 
 	RenderTemplate(w, r, "medical_records/view", TemplateData{
 		User: user,
@@ -184,8 +190,42 @@ func (h *WebHandler) MedicalRecordView(w http.ResponseWriter, r *http.Request, u
 			"Record":     mr,
 			"Diagnoses":  diagnosesList,
 			"Treatments": treatmentsList,
+			"Pain":       pv,
+			"HasPain":    hasPain,
+			"ErrPain":    r.URL.Query().Get("err") == "pain",
 		},
 	})
+}
+
+// MRPainSave menyimpan penilaian pengkajian nyeri untuk rekam medis.
+func (h *WebHandler) MRPainSave(w http.ResponseWriter, r *http.Request, user *auth.User) {
+	mrID, _ := strconv.Atoi(r.FormValue("medical_record_id"))
+	intensity, _ := strconv.Atoi(r.FormValue("intensity"))
+	createdBy := user.ID
+
+	p := &pain.PainAssessment{
+		MedicalRecordID:    mrID,
+		Location:           strings.TrimSpace(r.FormValue("location")),
+		Quality:            strings.TrimSpace(r.FormValue("quality")),
+		Intensity:          intensity,
+		OnsetDuration:      strings.TrimSpace(r.FormValue("onset_duration")),
+		Radiation:          strings.TrimSpace(r.FormValue("radiation")),
+		AggravatingFactors: strings.TrimSpace(r.FormValue("aggravating_factors")),
+		RelievingFactors:   strings.TrimSpace(r.FormValue("relieving_factors")),
+		Notes:              strings.TrimSpace(r.FormValue("notes")),
+		CreatedBy:          &createdBy,
+	}
+
+	if err := h.painSvc.Save(p); err != nil {
+		logger.Error.Printf("Simpan pengkajian nyeri rm %d gagal: %v", mrID, err)
+		http.Redirect(w, r, fmt.Sprintf("/medical-records/%d?err=pain", mrID), http.StatusSeeOther)
+		return
+	}
+
+	h.auditSvc.Log(&user.ID, "CREATE", "pain_assessments", &p.ID,
+		fmt.Sprintf("Pengkajian nyeri disimpan untuk rekam medis %d", mrID), r.RemoteAddr)
+
+	http.Redirect(w, r, fmt.Sprintf("/medical-records/%d", mrID), http.StatusSeeOther)
 }
 
 // MRCreatePrescription membuat resep PENDING dari rekam medis, lalu mengarahkan

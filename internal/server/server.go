@@ -168,6 +168,7 @@ func (s *Server) registerWebRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("/medical-records/new", protected(doctor, s.wh.MedicalRecordForm))
 	mux.HandleFunc("/medical-records/save", protected(doctor, s.wh.MedicalRecordSave))
 	mux.HandleFunc("/medical-records/prescription/create", protected(doctor, s.wh.MRCreatePrescription))
+	mux.HandleFunc("/medical-records/pain/save", protected(doctor, s.wh.MRPainSave))
 	mux.HandleFunc("/medical-records/diagnosis/add", protected(doctor, s.wh.MRAddDiagnosis))
 	mux.HandleFunc("/medical-records/diagnosis/", protected(doctor, s.wh.MRRemoveDiagnosis))
 	mux.HandleFunc("/medical-records/treatment/add", protected(doctor, s.wh.MRAddTreatment))
