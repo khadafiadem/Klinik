@@ -19,3 +19,10 @@ type ClinicSettings struct {
 	CreatedAt            time.Time `json:"created_at"`
 	UpdatedAt            time.Time `json:"updated_at"`
 }
+
+type InsuranceProvider struct {
+	ID        int    `json:"id"`
+	Name      string `json:"name"`
+	SortOrder int    `json:"sort_order"`
+	IsActive  bool   `json:"is_active"`
+}

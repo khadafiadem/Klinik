@@ -3,6 +3,7 @@ package handler
 import (
 	"net/http"
 	"strconv"
+	"strings"
 
 	"klinik-app/internal/auth"
 )
@@ -19,7 +20,21 @@ func (h *WebHandler) ClinicSettings(w http.ResponseWriter, r *http.Request, user
 		return
 	}
 
-	RenderTemplate(w, r, "clinic/settings", TemplateData{User: user, Data: settings})
+	providers, _ := h.clinicSvc.ListInsuranceProviders()
+
+	success, errorMsg := "", ""
+	switch r.URL.Query().Get("msg") {
+	case "providers-added":
+		success = "Asuransi berhasil ditambahkan"
+	case "provider-deleted":
+		success = "Asuransi berhasil dihapus"
+	case "provider-fail":
+		errorMsg = "Gagal memproses asuransi"
+	case "provider-bpjs":
+		errorMsg = "Asuransi BPJS tidak dapat dihapus"
+	}
+
+	RenderTemplate(w, r, "clinic/settings", TemplateData{User: user, Data: settings, Data2: providers, Success: success, Error: errorMsg})
 }
 
 func (h *WebHandler) clinicSettingsPost(w http.ResponseWriter, r *http.Request, user *auth.User) {
@@ -51,9 +66,48 @@ func (h *WebHandler) clinicSettingsPost(w http.ResponseWriter, r *http.Request, 
 	}
 
 	if err := h.clinicSvc.Update(settings); err != nil {
-		RenderTemplate(w, r, "clinic/settings", TemplateData{User: user, Error: err.Error()})
+		providers, _ := h.clinicSvc.ListInsuranceProviders()
+		RenderTemplate(w, r, "clinic/settings", TemplateData{User: user, Data: settings, Data2: providers, Error: err.Error()})
 		return
 	}
 
-	RenderTemplate(w, r, "clinic/settings", TemplateData{User: user, Data: settings, Success: "Pengaturan berhasil disimpan"})
+	providers, _ := h.clinicSvc.ListInsuranceProviders()
+	RenderTemplate(w, r, "clinic/settings", TemplateData{User: user, Data: settings, Data2: providers, Success: "Pengaturan berhasil disimpan"})
+}
+
+func (h *WebHandler) InsuranceProviderAdd(w http.ResponseWriter, r *http.Request, user *auth.User) {
+	name := strings.TrimSpace(r.FormValue("name"))
+	if name == "" {
+		backToSettings(w, r, "provider-fail")
+		return
+	}
+	if err := h.clinicSvc.AddInsuranceProvider(name); err != nil {
+		backToSettings(w, r, "provider-fail")
+		return
+	}
+	backToSettings(w, r, "providers-added")
+}
+
+func (h *WebHandler) InsuranceProviderDelete(w http.ResponseWriter, r *http.Request, user *auth.User) {
+	id, err := strconv.Atoi(r.FormValue("id"))
+	if err != nil || id <= 0 {
+		backToSettings(w, r, "provider-fail")
+		return
+	}
+	providers, _ := h.clinicSvc.ListInsuranceProviders()
+	for _, p := range providers {
+		if p.ID == id && strings.EqualFold(p.Name, "BPJS") {
+			backToSettings(w, r, "provider-bpjs")
+			return
+		}
+	}
+	if err := h.clinicSvc.DeleteInsuranceProvider(id); err != nil {
+		backToSettings(w, r, "provider-fail")
+		return
+	}
+	backToSettings(w, r, "provider-deleted")
+}
+
+func backToSettings(w http.ResponseWriter, r *http.Request, msg string) {
+	http.Redirect(w, r, "/clinic-settings?msg="+msg, http.StatusSeeOther)
 }

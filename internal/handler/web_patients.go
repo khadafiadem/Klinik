@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"klinik-app/internal/auth"
+	"klinik-app/internal/clinic"
 	"klinik-app/internal/patients"
 )
 
@@ -30,8 +31,9 @@ func (h *WebHandler) PatientForm(w http.ResponseWriter, r *http.Request, user *a
 	if p == nil {
 		p = &patients.Patient{}
 	}
+	providers := h.insuranceProvidersFor(p.InsuranceName)
 
-	RenderTemplate(w, r, "patients/form", TemplateData{User: user, Data: p})
+	RenderTemplate(w, r, "patients/form", TemplateData{User: user, Data: p, Data2: providers})
 }
 
 func (h *WebHandler) PatientSave(w http.ResponseWriter, r *http.Request, user *auth.User) {
@@ -69,7 +71,8 @@ func (h *WebHandler) PatientSave(w http.ResponseWriter, r *http.Request, user *a
 	}
 
 	if err != nil {
-		RenderTemplate(w, r, "patients/form", TemplateData{User: user, Data: p, Error: err.Error()})
+		providers := h.insuranceProvidersFor(p.InsuranceName)
+		RenderTemplate(w, r, "patients/form", TemplateData{User: user, Data: p, Data2: providers, Error: err.Error()})
 		return
 	}
 
@@ -88,4 +91,19 @@ func (h *WebHandler) PatientDelete(w http.ResponseWriter, r *http.Request, user 
 
 	h.patientSvc.Delete(id)
 	http.Redirect(w, r, "/patients", http.StatusSeeOther)
+}
+
+// insuranceProvidersFor mengembalikan daftar asuransi untuk dropdown form pasien,
+// memastikan nilai yang sudah tersimpan tetap muncul meski tidak ada di daftar master.
+func (h *WebHandler) insuranceProvidersFor(current string) []clinic.InsuranceProvider {
+	providers, _ := h.clinicSvc.ListInsuranceProviders()
+	if current == "" {
+		return providers
+	}
+	for _, p := range providers {
+		if strings.EqualFold(p.Name, current) {
+			return providers
+		}
+	}
+	return append(providers, clinic.InsuranceProvider{Name: current, SortOrder: 99})
 }

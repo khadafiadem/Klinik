@@ -69,6 +69,23 @@ ALTER TABLE queues ADD CONSTRAINT queues_status_check
     CHECK (status IN ('MENUNGGU', 'DIPANGGIL', 'SEDANG_DIPERIKSA', 'MENUNGGU_BAYAR', 'SELESAI', 'DIBATALKAN'));
 `
 
+const bootstrapInsuranceProviders = `
+CREATE TABLE IF NOT EXISTS insurance_providers (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(100) NOT NULL UNIQUE,
+    sort_order INT NOT NULL DEFAULT 0,
+    is_active BOOLEAN NOT NULL DEFAULT TRUE,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+INSERT INTO insurance_providers (name, sort_order) VALUES
+    ('BPJS', 1),
+    ('Umum', 2),
+    ('Asuransi Lain', 3)
+ON CONFLICT (name) DO NOTHING;
+`
+
 func initHandler() {
 	logger.Init("info")
 
@@ -93,6 +110,7 @@ func initHandler() {
 		migrator.RunBootstrapSQL(bootstrapMigration022)
 		migrator.RunBootstrapSQL(bootstrapMigration023)
 		migrator.RunBootstrapSQL(bootstrapMigration024)
+		migrator.RunBootstrapSQL(bootstrapInsuranceProviders)
 	}
 
 	srv := server.New(cfg, db)

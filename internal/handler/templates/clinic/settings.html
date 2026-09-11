@@ -101,5 +101,49 @@
             </form>
         </div>
     </div>
+
+    <div class="card" style="margin-top:24px;">
+        <div class="card-header">
+            <h3 class="card-title">Daftar Asuransi</h3>
+        </div>
+        <div class="card-body">
+            <p style="margin-bottom:12px;">Nama asuransi ini akan tampil sebagai pilihan pada form pasien. BPJS selalu berada paling atas.</p>
+
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Urutan</th>
+                        <th>Nama Asuransi</th>
+                        <th style="width:120px;">Aksi</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {{range .Data2}}
+                    <tr>
+                        <td>{{.SortOrder}}</td>
+                        <td>{{.Name}}</td>
+                        <td>
+                            {{if ne .Name "BPJS"}}
+                            <form method="POST" action="/settings/insurance/delete" style="display:inline;" onsubmit="return confirm('Hapus asuransi {{.Name}}?')">
+                                <input type="hidden" name="id" value="{{.ID}}">
+                                <button type="submit" class="btn btn-danger btn-sm">Hapus</button>
+                            </form>
+                            {{else}}
+                            <span class="badge">Default</span>
+                            {{end}}
+                        </td>
+                    </tr>
+                    {{end}}
+                </tbody>
+            </table>
+
+            <form method="POST" action="/settings/insurance/add" style="display:flex;gap:8px;align-items:center;margin-top:16px;">
+                <div class="form-group" style="flex:1;margin:0;">
+                    <input type="text" id="new_insurance" name="name" class="form-input" placeholder="Nama asuransi baru, contoh: Manulife" required>
+                </div>
+                <button type="submit" class="btn btn-primary">&#43; Tambah Asuransi</button>
+            </form>
+        </div>
+    </div>
 </div>
 {{end}}
