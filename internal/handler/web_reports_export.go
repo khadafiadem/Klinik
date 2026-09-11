@@ -78,6 +78,35 @@ func (h *WebHandler) ExportRegistrationsCSV(w http.ResponseWriter, r *http.Reque
 	respondCSV(w, exportFilename("laporan_pendaftaran"), header, data)
 }
 
+func (h *WebHandler) ExportMedicalServicesCSV(w http.ResponseWriter, r *http.Request, user *auth.User) {
+	detail, err := h.rptSvc.GetMedicalServiceDetail(parseReportRange(r))
+	if err != nil || detail == nil {
+		http.Error(w, "Gagal membuat laporan", http.StatusInternalServerError)
+		return
+	}
+	data := make([][]string, 0, len(detail.Rows)+1)
+	for _, v := range detail.Rows {
+		data = append(data, []string{
+			v.DoctorName, v.Specialization,
+			strconv.Itoa(v.VisitCount),
+			strconv.FormatFloat(v.TreatmentTotal, 'f', 2, 64),
+			strconv.FormatFloat(v.ConsultationFee, 'f', 2, 64),
+			strconv.FormatFloat(v.ConsultationTotal, 'f', 2, 64),
+			strconv.FormatFloat(v.GrandTotal, 'f', 2, 64),
+		})
+	}
+	data = append(data, []string{
+		"TOTAL", "",
+		strconv.Itoa(detail.TotalVisits),
+		strconv.FormatFloat(detail.TotalTreat, 'f', 2, 64),
+		"",
+		strconv.FormatFloat(detail.TotalCons, 'f', 2, 64),
+		strconv.FormatFloat(detail.GrandTotal, 'f', 2, 64),
+	})
+	header := []string{"Dokter", "Spesialisasi", "Kunjungan", "Tindakan (Rp)", "Tarif Konsultasi (Rp)", "Jasa Konsultasi (Rp)", "Total Jasa Medis (Rp)"}
+	respondCSV(w, exportFilename("laporan_jasa_medis"), header, data)
+}
+
 func (h *WebHandler) ExportRevenueCSV(w http.ResponseWriter, r *http.Request, user *auth.User) {
 	detail, err := h.rptSvc.GetRevenueDetail(parseReportRange(r))
 	if err != nil || detail == nil {

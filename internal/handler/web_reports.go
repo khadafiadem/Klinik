@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"klinik-app/internal/auth"
+	"klinik-app/internal/reports"
 )
 
 func (h *WebHandler) ReportsDashboard(w http.ResponseWriter, r *http.Request, user *auth.User) {
@@ -81,6 +82,22 @@ func (h *WebHandler) ReportsRevenue(w http.ResponseWriter, r *http.Request, user
 	RenderTemplate(w, r, "reports/revenue", TemplateData{
 		User: user,
 		Data: data,
+	})
+}
+
+func (h *WebHandler) ReportsMedicalService(w http.ResponseWriter, r *http.Request, user *auth.User) {
+	from, to := parseReportRange(r)
+	detail, err := h.rptSvc.GetMedicalServiceDetail(from, to)
+	if err != nil {
+		detail = &reports.MedicalServiceDetail{}
+	}
+	RenderTemplate(w, r, "reports/medical_service", TemplateData{
+		User: user,
+		Data: map[string]interface{}{
+			"Detail": detail,
+			"From":   from,
+			"To":     to,
+		},
 	})
 }
 

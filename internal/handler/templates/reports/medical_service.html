@@ -1,0 +1,103 @@
+{{define "title"}}Laporan Jasa Medis{{end}}
+
+{{define "content"}}
+{{$d := .Data}}
+<div class="page-header">
+    <div>
+        <h1 class="page-title">Laporan Jasa Medis</h1>
+        <p class="page-subtitle">Pendapatan jasa medis per dokter</p>
+    </div>
+    <a href="/reports" class="btn btn-secondary">Kembali</a>
+</div>
+
+{{if $d.Detail}}
+<div class="stat-grid" style="margin-bottom:24px;">
+    <div class="stat-card stat-primary">
+        <div class="stat-content">
+            <div class="stat-number">{{$d.Detail.TotalVisits}}</div>
+            <div class="stat-label">Total Kunjungan</div>
+        </div>
+    </div>
+    <div class="stat-card stat-info">
+        <div class="stat-content">
+            <div class="stat-number">Rp {{printf "%.0f" $d.Detail.TotalTreat}}</div>
+            <div class="stat-label">Total Tindakan</div>
+        </div>
+    </div>
+    <div class="stat-card stat-success">
+        <div class="stat-content">
+            <div class="stat-number">Rp {{printf "%.0f" $d.Detail.TotalCons}}</div>
+            <div class="stat-label">Jasa Konsultasi</div>
+        </div>
+    </div>
+    <div class="stat-card stat-warning">
+        <div class="stat-content">
+            <div class="stat-number">Rp {{printf "%.0f" $d.Detail.GrandTotal}}</div>
+            <div class="stat-label">Total Jasa Medis</div>
+        </div>
+    </div>
+</div>
+
+<div class="card" style="margin-top:24px;">
+    <div class="card-header">
+        <h3 class="card-title">Rincian Jasa Medis per Dokter</h3>
+        <div class="card-actions" style="display:flex;gap:8px;flex-wrap:wrap;">
+            <form method="GET" action="/reports/medical-services" style="display:flex;gap:8px;align-items:center;">
+                <label style="font-size:.85rem;">Dari</label>
+                <input type="date" name="from" class="form-input" value="{{$d.From}}" style="max-width:160px;">
+                <label style="font-size:.85rem;">Sampai</label>
+                <input type="date" name="to" class="form-input" value="{{$d.To}}" style="max-width:160px;">
+                <button type="submit" class="btn btn-primary btn-sm">Tampilkan</button>
+            </form>
+            <a href="/reports/export/medical-services?from={{$d.From}}&to={{$d.To}}" class="btn btn-success btn-sm">Export CSV</a>
+        </div>
+    </div>
+    <div class="card-body">
+        {{if $d.Detail.Rows}}
+        <div class="table-responsive">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Dokter</th>
+                        <th>Spesialisasi</th>
+                        <th style="text-align:center;">Kunjungan</th>
+                        <th style="text-align:right;">Tindakan (Rp)</th>
+                        <th style="text-align:right;">Tarif Konsultasi</th>
+                        <th style="text-align:right;">Jasa Konsultasi</th>
+                        <th style="text-align:right;">Total Jasa Medis</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {{range $d.Detail.Rows}}
+                    <tr>
+                        <td>{{.DoctorName}}</td>
+                        <td>{{.Specialization}}</td>
+                        <td style="text-align:center;"><span class="badge badge-info">{{.VisitCount}}</span></td>
+                        <td style="text-align:right;font-family:monospace;">{{printf "%.2f" .TreatmentTotal}}</td>
+                        <td style="text-align:right;font-family:monospace;">{{printf "%.2f" .ConsultationFee}}</td>
+                        <td style="text-align:right;font-family:monospace;">{{printf "%.2f" .ConsultationTotal}}</td>
+                        <td style="text-align:right;font-family:monospace;"><strong>{{printf "%.2f" .GrandTotal}}</strong></td>
+                    </tr>
+                    {{end}}
+                </tbody>
+                <tfoot>
+                    <tr style="font-weight:700;">
+                        <td colspan="2">TOTAL</td>
+                        <td style="text-align:center;">{{$d.Detail.TotalVisits}}</td>
+                        <td style="text-align:right;font-family:monospace;">{{printf "%.2f" $d.Detail.TotalTreat}}</td>
+                        <td></td>
+                        <td style="text-align:right;font-family:monospace;">{{printf "%.2f" $d.Detail.TotalCons}}</td>
+                        <td style="text-align:right;font-family:monospace;">{{printf "%.2f" $d.Detail.GrandTotal}}</td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+        {{else}}
+        <p class="text-muted">Belum ada data kunjungan pada periode ini.</p>
+        {{end}}
+    </div>
+</div>
+{{else}}
+<p class="text-muted">Gagal memuat laporan jasa medis.</p>
+{{end}}
+{{end}}

@@ -18,39 +18,39 @@ type PatientSummary struct {
 }
 
 type RegistrationSummary struct {
-	TotalToday      int
-	TotalWeek       int
-	TotalMonth      int
-	CompletedToday  int
-	CancelledToday  int
+	TotalToday     int
+	TotalWeek      int
+	TotalMonth     int
+	CompletedToday int
+	CancelledToday int
 }
 
 type DoctorActivity struct {
-	DoctorName    string
+	DoctorName     string
 	Specialization string
-	VisitCount    int
-	TodayCount    int
+	VisitCount     int
+	TodayCount     int
 }
 
 type RevenueSummary struct {
-	TodayRevenue   float64
-	WeekRevenue    float64
-	MonthRevenue   float64
-	TotalRevenue   float64
+	TodayRevenue float64
+	WeekRevenue  float64
+	MonthRevenue float64
+	TotalRevenue float64
 }
 
 type MedicineStockSummary struct {
-	TotalMedicines  int
-	LowStockCount   int
-	ExpiredCount    int
+	TotalMedicines int
+	LowStockCount  int
+	ExpiredCount   int
 }
 
 type PaymentSummary struct {
-	CashTotal     float64
-	TransferTotal float64
-	QRISTotal     float64
-	BPJSTotal     float64
-	OtherTotal    float64
+	CashTotal      float64
+	TransferTotal  float64
+	QRISTotal      float64
+	BPJSTotal      float64
+	OtherTotal     float64
 	CompletedCount int
 	PendingCount   int
 }
@@ -132,11 +132,11 @@ func (s *Service) GetPaymentSummary() (*PaymentSummary, error) {
 }
 
 type LowStockMedicine struct {
-	ID            int
-	Name          string
-	MedicineCode  string
-	Stock         int
-	MinimumStock  int
+	ID           int
+	Name         string
+	MedicineCode string
+	Stock        int
+	MinimumStock int
 }
 
 func (s *Service) GetLowStockMedicines() ([]LowStockMedicine, error) {
@@ -231,6 +231,61 @@ func (s *Service) GetVisitRows(from, to string) ([]VisitRow, error) {
 	return list, nil
 }
 
+type MedicalServiceRow struct {
+	DoctorID          int
+	DoctorName        string
+	Specialization    string
+	VisitCount        int
+	TreatmentTotal    float64
+	ConsultationFee   float64
+	ConsultationTotal float64
+	GrandTotal        float64
+}
+
+type MedicalServiceDetail struct {
+	Rows        []MedicalServiceRow
+	TotalVisits int
+	TotalTreat  float64
+	TotalCons   float64
+	GrandTotal  float64
+}
+
+func (s *Service) GetMedicalServiceDetail(from, to string) (*MedicalServiceDetail, error) {
+	detail := &MedicalServiceDetail{}
+
+	rows, err := s.db.Query(`SELECT d.id, d.full_name, COALESCE(d.specialization,''),
+		COUNT(mr.id),
+		COALESCE(SUM(COALESCE(t.sum_cost,0)),0),
+		COALESCE(d.consultation_fee,0)
+		FROM doctors d
+		LEFT JOIN medical_records mr ON mr.doctor_id = d.id AND mr.examination_date BETWEEN $1 AND $2
+		LEFT JOIN (SELECT medical_record_id, SUM(cost) AS sum_cost
+			FROM medical_record_treatments GROUP BY medical_record_id) t
+			ON t.medical_record_id = mr.id
+		GROUP BY d.id, d.full_name, d.specialization, d.consultation_fee
+		ORDER BY COUNT(mr.id) DESC, d.full_name ASC`, from, to)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var r MedicalServiceRow
+		if err := rows.Scan(&r.DoctorID, &r.DoctorName, &r.Specialization,
+			&r.VisitCount, &r.TreatmentTotal, &r.ConsultationFee); err != nil {
+			return nil, err
+		}
+		r.ConsultationTotal = float64(r.VisitCount) * r.ConsultationFee
+		r.GrandTotal = r.ConsultationTotal + r.TreatmentTotal
+		detail.Rows = append(detail.Rows, r)
+		detail.TotalVisits += r.VisitCount
+		detail.TotalTreat += r.TreatmentTotal
+		detail.TotalCons += r.ConsultationTotal
+		detail.GrandTotal += r.GrandTotal
+	}
+	return detail, nil
+}
+
 type RevenueRow struct {
 	PaymentNumber string
 	PaymentDate   string
@@ -242,9 +297,9 @@ type RevenueRow struct {
 }
 
 type RevenueDetail struct {
-	Rows   []RevenueRow
-	Count  int
-	Total  float64
+	Rows  []RevenueRow
+	Count int
+	Total float64
 }
 
 func (s *Service) GetRevenueDetail(from, to string) (*RevenueDetail, error) {
