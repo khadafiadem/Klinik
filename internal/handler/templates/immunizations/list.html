@@ -1,0 +1,146 @@
+{{define "title"}}Imunisasi{{end}}
+
+{{define "content"}}
+<div class="page-header">
+    <div class="page-header-left">
+        <h1>Jadwal Imunisasi</h1>
+        <span class="page-subtitle">Pencatatan imunisasi pasien - acuan Jadwal Imunisasi IDAI</span>
+    </div>
+</div>
+
+<div class="page-body">
+    {{if eq .Data.Err "fail"}}
+    <div class="alert alert-error">Gagal menyimpan imunisasi. Pastikan pasien, vaksin, dan tanggal diisi.</div>
+    {{end}}
+
+    <div class="card" style="margin-bottom:24px;">
+        <div class="card-header">
+            <h3 class="card-title">Catat Imunisasi</h3>
+        </div>
+        <div class="card-body">
+            <form method="POST" action="/immunizations/save" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;align-items:end;">
+                <div class="form-group">
+                    <label for="patient_id">Pasien <span class="required">*</span></label>
+                    <select id="patient_id" name="patient_id" class="form-select" required>
+                        <option value="">-- Pilih Pasien --</option>
+                        {{range .Data.Patients}}
+                        <option value="{{.ID}}">{{.FullName}} ({{.MedicalRecordNumber}})</option>
+                        {{end}}
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="immunization_id">Vaksin <span class="required">*</span></label>
+                    <select id="immunization_id" name="immunization_id" class="form-select" required onchange="document.getElementById('vaccine_name').value=this.options[this.selectedIndex].text.split(' (')[0]">
+                        <option value="">-- Pilih Vaksin (IDAI) --</option>
+                        {{range .Data.Schedules}}
+                        <option value="{{.ID}}">{{.Name}} ({{.AgeLabel}})</option>
+                        {{end}}
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="vaccination_date">Tanggal <span class="required">*</span></label>
+                    <input type="date" id="vaccination_date" name="vaccination_date" class="form-input" value="{{now}}" required>
+                </div>
+                <div class="form-group">
+                    <label for="vaccine_name">Nama Vaksin</label>
+                    <input type="text" id="vaccine_name" name="vaccine_name" class="form-input" placeholder="Otomatis dari jadwal">
+                </div>
+                <div class="form-group">
+                    <label for="batch_number">No. Batch</label>
+                    <input type="text" id="batch_number" name="batch_number" class="form-input" placeholder="No. batch vaksin">
+                </div>
+                <div class="form-group">
+                    <label for="provider_name">Petugas / Faskes</label>
+                    <input type="text" id="provider_name" name="provider_name" class="form-input" placeholder="Nama petugas / fasilitas">
+                </div>
+                <div class="form-group">
+                    <button type="submit" class="btn btn-primary">&#10004; Simpan</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="card" style="margin-bottom:24px;">
+        <div class="card-header">
+            <h3 class="card-title">Riwayat Imunisasi Pasien</h3>
+        </div>
+        <div class="card-body">
+            <div class="search-box" style="margin-bottom:12px;">
+                <div class="search-container">
+                    <span class="search-icon">&#128269;</span>
+                    <input type="text" id="searchInput" placeholder="Cari nama pasien atau nomor RM..." onkeyup="searchTable('searchInput', 'immTable')">
+                </div>
+            </div>
+            <div class="table-wrapper">
+                {{if .Data.Records}}
+                <table id="immTable">
+                    <thead>
+                        <tr>
+                            <th>Tanggal</th>
+                            <th>Pasien</th>
+                            <th>Vaksin</th>
+                            <th>No. Batch</th>
+                            <th>Petugas / Faskes</th>
+                            <th>Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {{range .Data.Records}}
+                        <tr>
+                            <td>{{.VaccinationDate}}</td>
+                            <td><span class="table-name">{{.PatientName}}</span> <small>({{.PatientMRN}})</small></td>
+                            <td><span class="badge badge-primary">{{.VaccineName}}</span></td>
+                            <td>{{.BatchNumber}}</td>
+                            <td>{{.ProviderName}}</td>
+                            <td>
+                                <form method="POST" action="/immunizations/{{.ID}}/delete" onsubmit="return confirmDelete('imunisasi ini')">
+                                    <button type="submit" class="btn btn-sm btn-danger">Hapus</button>
+                                </form>
+                            </td>
+                        </tr>
+                        {{end}}
+                    </tbody>
+                </table>
+                {{else}}
+                <div class="empty-state">
+                    <div class="empty-state-icon">&#128138;</div>
+                    <h3>Belum Ada Catatan Imunisasi</h3>
+                    <p>Catat imunisasi pasien melalui form di atas.</p>
+                </div>
+                {{end}}
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header">
+            <h3 class="card-title">Jadwal Imunisasi IDAI</h3>
+            <span class="badge badge-secondary">Acuan Umum</span>
+        </div>
+        <div class="card-body" style="padding:0;">
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>No</th>
+                            <th>Vaksin</th>
+                            <th>Usia</th>
+                            <th>Kategori</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {{range .Data.Schedules}}
+                        <tr>
+                            <td>{{.SortOrder}}</td>
+                            <td><strong>{{.Name}}</strong></td>
+                            <td>{{.AgeLabel}}</td>
+                            <td><span class="badge {{if eq .Category "WAJIB"}}badge-success{{else}}badge-info{{end}}">{{.Category}}</span></td>
+                        </tr>
+                        {{end}}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{{end}}
