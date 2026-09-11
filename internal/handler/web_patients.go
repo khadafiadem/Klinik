@@ -27,6 +27,9 @@ func (h *WebHandler) PatientForm(w http.ResponseWriter, r *http.Request, user *a
 			p, _ = h.patientSvc.GetByID(id)
 		}
 	}
+	if p == nil {
+		p = &patients.Patient{}
+	}
 
 	RenderTemplate(w, r, "patients/form", TemplateData{User: user, Data: p})
 }
