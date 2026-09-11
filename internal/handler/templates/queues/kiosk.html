@@ -246,6 +246,55 @@
             font-weight:600;
             color:rgba(255,255,255,0.6);
         }
+
+        /* Print receipt (struk) */
+        .print-only { display:none; }
+
+        .print-only .receipt {
+            font-family:'Courier New',monospace;
+            color:#000;
+            background:#fff;
+            text-align:center;
+            padding:4px;
+        }
+        .print-only .r-clinic { font-size:20px; font-weight:700; text-transform:uppercase; }
+        .print-only .r-sub { font-size:11px; margin-top:2px; }
+        .print-only .r-divider { border-top:1px dashed #000; margin:6px 0; }
+        .print-only .r-label { font-size:11px; letter-spacing:2px; margin-top:4px; }
+        .print-only .r-number { font-size:64px; font-weight:900; line-height:1.05; }
+        .print-only .r-row { font-size:12px; text-align:left; margin:2px 0; }
+        .print-only .r-note { font-size:11px; margin-top:6px; }
+
+        @media print {
+            body { background:#fff; overflow:visible; }
+            body * { visibility:hidden; }
+            .print-only, .print-only * { visibility:visible; }
+            .print-only {
+                display:block;
+                position:absolute;
+                left:0;
+                top:0;
+                width:80mm;
+                background:#fff;
+            }
+        }
+
+        .ticket-actions { display:flex; gap:12px; justify-content:center; margin-top:8px; }
+
+        .ticket-reprint {
+            display:inline-block;
+            padding:14px 32px;
+            background: linear-gradient(135deg, #16a34a, #15803d);
+            color:white;
+            border:none;
+            border-radius:12px;
+            font-size:1rem;
+            font-weight:700;
+            cursor:pointer;
+            transition:transform 0.15s ease;
+        }
+
+        .ticket-close:active, .ticket-reprint:active { transform:scale(0.95); }
     </style>
 </head>
 <body>
@@ -272,7 +321,27 @@
             <div class="ticket-number" id="ticketNumber"></div>
             <div class="ticket-label">Silakan tunggu dipanggil ke meja pendaftaran</div>
             <div class="ticket-time" id="ticketTime"></div>
-            <button class="ticket-close" onclick="closeTicket()">TUTUP</button>
+            <div class="ticket-actions">
+                <button class="ticket-reprint" onclick="reprintTicket()">&#128424; CETAK ULANG</button>
+                <button class="ticket-close" onclick="closeTicket()">TUTUP</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Print Receipt (hidden, print-only) -->
+    <div class="print-only" id="printArea">
+        <div class="receipt">
+            <div class="r-clinic" id="rClinic"></div>
+            <div class="r-sub">Sistem Antrian Klinik</div>
+            <div class="r-divider"></div>
+            <div class="r-label">NOMOR ANTRIAN</div>
+            <div class="r-number" id="rNumber"></div>
+            <div class="r-divider"></div>
+            <div class="r-row">Tanggal : <span id="rDate"></span></div>
+            <div class="r-row">Jam &nbsp;&nbsp;: <span id="rTime"></span></div>
+            <div class="r-divider"></div>
+            <div class="r-note">Silakan tunggu dipanggil ke meja pendaftaran.</div>
+            <div class="r-note">Simpan struk ini sebagai bukti.</div>
         </div>
     </div>
 
@@ -309,10 +378,18 @@
                     var now = new Date();
                     var h = String(now.getHours()).padStart(2,'0');
                     var m = String(now.getMinutes()).padStart(2,'0');
+                    var days = ['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'];
+                    var months = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
+                    var dateStr = days[now.getDay()] + ', ' + now.getDate() + ' ' + months[now.getMonth()] + ' ' + now.getFullYear();
                     document.getElementById('ticketClinic').textContent = data.clinicName || 'Klinik';
                     document.getElementById('ticketNumber').textContent = data.queue.queue_number;
                     document.getElementById('ticketTime').textContent = 'Diambil pada pukul ' + h + ':' + m;
+                    document.getElementById('rClinic').textContent = data.clinicName || 'Klinik';
+                    document.getElementById('rNumber').textContent = data.queue.queue_number;
+                    document.getElementById('rDate').textContent = dateStr;
+                    document.getElementById('rTime').textContent = h + ':' + m;
                     document.getElementById('ticketOverlay').classList.add('show');
+                    setTimeout(function(){ window.print(); }, 400);
                 } else {
                     showError(data.message || 'Gagal mengambil nomor antrian');
                 }
@@ -325,6 +402,10 @@
 
         function closeTicket() {
             document.getElementById('ticketOverlay').classList.remove('show');
+        }
+
+        function reprintTicket() {
+            window.print();
         }
 
         function showError(msg) {
