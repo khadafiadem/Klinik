@@ -160,6 +160,10 @@ func (s *Server) registerWebRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("/immunizations/save", protected(nurse, s.wh.ImmunizationSave))
 	mux.HandleFunc("/immunizations/", protected(regAcc, s.wh.ImmunizationDelete))
 
+	mux.HandleFunc("/surat", protected(regAcc, s.wh.LettersList))
+	mux.HandleFunc("/surat/generate", protected(regAcc, s.wh.LetterGenerate))
+	mux.HandleFunc("/surat/print/", protected(regAcc, s.wh.LetterPrint))
+
 	mux.HandleFunc("/antrian/kiosk", s.wh.KioskPage)
 	mux.HandleFunc("/antrian/display", s.wh.DisplayPage)
 	mux.HandleFunc("/antrian/pendaftaran", protected(regAcc, s.wh.KioskQueuePage))

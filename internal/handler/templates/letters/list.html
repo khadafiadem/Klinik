@@ -1,0 +1,96 @@
+{{define "title"}}Template Surat{{end}}
+
+{{define "content"}}
+<div class="page-header">
+    <div class="page-header-left">
+        <h1>Template Surat</h1>
+        <span class="page-subtitle">Buat dan cetak surat keterangan klinik</span>
+    </div>
+</div>
+
+<div class="page-body">
+    {{if eq .Data.Err "fail"}}
+    <div class="alert alert-error">Gagal menerbitkan surat. Pastikan template dan pasien dipilih.</div>
+    {{end}}
+
+    <div class="card" style="margin-bottom:24px;">
+        <div class="card-header">
+            <h3 class="card-title">Terbitkan Surat Baru</h3>
+        </div>
+        <div class="card-body">
+            <form method="POST" action="/surat/generate" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;align-items:end;">
+                <div class="form-group">
+                    <label for="code">Jenis Surat <span class="required">*</span></label>
+                    <select id="code" name="code" class="form-select" required>
+                        <option value="">-- Pilih Template --</option>
+                        {{range .Data.Templates}}
+                        <option value="{{.Code}}">{{.Name}}</option>
+                        {{end}}
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="patient_id">Pasien <span class="required">*</span></label>
+                    <select id="patient_id" name="patient_id" class="form-select" required>
+                        <option value="">-- Pilih Pasien --</option>
+                        {{range .Data.Patients}}
+                        <option value="{{.ID}}">{{.FullName}} ({{.MedicalRecordNumber}})</option>
+                        {{end}}
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="doctor_id">Dokter (penandatangan)</label>
+                    <select id="doctor_id" name="doctor_id" class="form-select">
+                        <option value="">-- Pilih Dokter --</option>
+                        {{range .Data.Doctors}}
+                        <option value="{{.ID}}">{{.FullName}} - {{.Specialization}}</option>
+                        {{end}}
+                    </select>
+                </div>
+                <div class="form-group">
+                    <button type="submit" class="btn btn-primary">&#9999; Terbitkan</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header">
+            <h3 class="card-title">Riwayat Surat Terbit</h3>
+        </div>
+        <div class="card-body" style="padding:0;">
+            <div class="table-wrapper">
+                {{if .Data.Recent}}
+                <table>
+                    <thead>
+                        <tr>
+                            <th>No. Surat</th>
+                            <th>Jenis</th>
+                            <th>Pasien</th>
+                            <th>Tanggal</th>
+                            <th>Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {{range .Data.Recent}}
+                        <tr>
+                            <td><span class="table-code">{{.LetterNumber}}</span></td>
+                            <td>{{.TemplateName}}</td>
+                            <td><span class="table-name">{{.PatientName}}</span></td>
+                            <td>{{.CreatedAt}}</td>
+                            <td><a href="/surat/print/{{.ID}}" target="_blank" class="btn btn-sm btn-outline">&#128196; Cetak</a></td>
+                        </tr>
+                        {{end}}
+                    </tbody>
+                </table>
+                {{else}}
+                <div class="empty-state">
+                    <div class="empty-state-icon">&#128196;</div>
+                    <h3>Belum Ada Surat Terbit</h3>
+                    <p>Pilih template dan pasien untuk menerbitkan surat pertama.</p>
+                </div>
+                {{end}}
+            </div>
+        </div>
+    </div>
+</div>
+{{end}}

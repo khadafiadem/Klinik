@@ -1,0 +1,62 @@
+{{define "print"}}
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{{.Subject}} - {{.ClinicName}}</title>
+<style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Times New Roman', serif; color: #000; background: #f0f2f5; padding: 24px; }
+    .sheet { max-width: 800px; margin: 0 auto; background: #fff; padding: 48px 56px; border-radius: 8px; box-shadow: 0 2px 12px rgba(0,0,0,.08); }
+    .letterhead { border-bottom: 3px double #000; padding-bottom: 14px; margin-bottom: 22px; }
+    .clinic-name { font-size: 1.5rem; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; }
+    .clinic-meta { font-size: .85rem; margin-top: 4px; line-height: 1.5; }
+    .letter-index { font-size: .85rem; text-align: center; margin: 4px 0 8px; }
+    .letter-title { text-align: center; font-size: 1.1rem; font-weight: 700; text-decoration: underline; margin: 12px 0 4px; }
+    .letter-subtitle { text-align: center; font-size: .9rem; font-weight: 600; margin-bottom: 22px; }
+    .letter-body { font-size: .95rem; line-height: 1.7; text-align: justify; white-space: pre-line; }
+    .sig-area { display: flex; justify-content: flex-end; margin-top: 56px; }
+    .sig-box { text-align: center; font-size: .88rem; width: 260px; }
+    .sig-space { height: 76px; }
+    .sig-name { font-weight: 700; text-decoration: underline; }
+    .sig-role { margin-top: 2px; }
+    .toolbar { max-width: 800px; margin: 0 auto 16px; text-align: right; }
+    .btn-print { background: #2563eb; color: #fff; border: none; padding: 10px 22px; border-radius: 6px; font-size: .95rem; cursor: pointer; font-weight: 600; }
+    .btn-print:hover { background: #1d4ed8; }
+    @media print {
+        body { background: #fff; padding: 0; }
+        .sheet { box-shadow: none; border-radius: 0; max-width: none; padding: 12mm; }
+        .toolbar { display: none; }
+        @page { size: A4; margin: 12mm; }
+    }
+</style>
+</head>
+<body>
+<div class="toolbar">
+    <button class="btn-print" onclick="window.print()">&#128424; Cetak</button>
+</div>
+<div class="sheet">
+    <div class="letterhead">
+        <div class="clinic-name">{{.ClinicName}}</div>
+        {{if .ClinicAddress}}<div class="clinic-meta">{{.ClinicAddress}}</div>{{end}}
+        {{if .ClinicPhone}}<div class="clinic-meta">Telp: {{.ClinicPhone}}{{if .ClinicEmail}} | Email: {{.ClinicEmail}}{{end}}</div>{{end}}
+    </div>
+    <div class="letter-title">{{.Subject}}</div>
+    <div class="letter-subtitle" style="text-align:center;">Nomor : {{.LetterNumber}}</div>
+    <div style="text-align:right;font-size:.93rem;margin-bottom:20px;">{{.Date}}</div>
+    <div class="letter-body">{{.Body}}</div>
+    <div class="sig-area">
+        <div class="sig-box">
+            <div>&nbsp;</div>
+            <div class="sig-space">&nbsp;</div>
+            {{if .DoctorName}}<div class="sig-name">{{.DoctorName}}</div>
+            <div class="sig-role">Dokter Penanggung Jawab</div>
+            {{else}}<div class="sig-name">{{.ClinicName}}</div>
+            <div class="sig-role">Penanggung Jawab Klinik</div>{{end}}
+        </div>
+    </div>
+</div>
+</body>
+</html>
+{{end}}
